@@ -1,0 +1,541 @@
+/* =========================================================
+   Gangstar - estilos (pixel/retro/arcade). Todas as classes do jogo usam o prefixo gs-.
+   Separado do FutOnze na v1.0.0 (era a v4.64.0 dentro do FutOnze).
+   ========================================================= */
+
+:root {
+  --fonte-corpo: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --noite: #0c0617;
+  --giz: #f3f6ef;
+  --accent: #ff4fd8;
+  --largura: 520px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--noite);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  color: var(--giz);
+  font-family: var(--fonte-corpo);
+  font-size: 15px;
+  line-height: 1.4;
+  background: var(--noite);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ================= Gangstar: boas-vindas (pixel/retro/arcade) ================= */
+.gs-tela { position: relative; max-width: var(--largura); min-height: 100dvh; margin: 0 auto; overflow: hidden; background: #0c0617; color: #f4e9ff; display: flex; flex-direction: column; }
+.gs-banner { position: relative; flex: 0 0 auto; width: 100%; height: 30dvh; min-height: 180px; max-height: 260px; background: linear-gradient(0deg, #0c0617 0%, rgba(12,6,23,.05) 28%, transparent 55%), url("/gangstar-capa.jpg") center 38% / cover no-repeat; }
+.gs-grade { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 4px 4px; mix-blend-mode: overlay; pointer-events: none; }
+.gs-voltar { position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 14px; z-index: 2; width: 40px; height: 40px; display: grid; place-items: center; background: rgba(10,4,20,.65); border: 2px solid rgba(255,255,255,.25); border-radius: 10px; color: #fff; }
+.gs-conteudo { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px 22px calc(34px + env(safe-area-inset-bottom)); text-align: center; }
+.gs-titulo { font-family: "Press Start 2P", monospace; font-size: clamp(26px, 9vw, 42px); line-height: 1.3; margin: 0; color: #ffb020; text-shadow: 3px 3px 0 #7a1fa8, 0 0 22px rgba(255,120,30,.5); letter-spacing: 1px; }
+.gs-titulo-dest { color: #ff4fd8; }
+.gs-titulo-pequeno { font-size: clamp(16px, 5vw, 22px); color: #ff4fd8; text-shadow: 2px 2px 0 #3a1a52; }
+.gs-subtitulo { font-family: "Press Start 2P", monospace; font-size: clamp(10px, 3vw, 13px); margin: 0; color: #fff0c2; text-shadow: 2px 2px 0 rgba(0,0,0,.6); letter-spacing: 1px; text-transform: uppercase; }
+.gs-texto { max-width: 320px; margin: 0; font-size: 14px; color: #e8dcf7; opacity: .9; }
+.gs-emoji { font-size: 40px; margin: 0; }
+.gs-botoes { display: grid; gap: 12px; width: 100%; max-width: 340px; margin-top: 8px; }
+.gs-btn { font-family: "Press Start 2P", monospace; font-size: 12px; padding: 16px 10px; border-radius: 6px; border: 3px solid #1a0f2e; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 4px 4px 0 #1a0f2e; transition: transform .05s, box-shadow .05s; }
+.gs-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #1a0f2e; }
+.gs-btn-principal { background: linear-gradient(180deg, #ff8a1f, #d9480f); color: #1a0f00; }
+.gs-btn-secundario { background: linear-gradient(180deg, #3a2a52, #241733); color: #f4e9ff; border-color: #ff4fd8; }
+.gs-dica { font-size: 11px; color: #cbb8e8; opacity: .85; margin: 0; }
+
+/* ================= Gangstar: criacao de personagem ================= */
+.gs-conteudo-criacao { justify-content: flex-start; padding-top: calc(28px + env(safe-area-inset-top)); gap: 18px; }
+.gs-campo { width: 100%; max-width: 340px; display: grid; gap: 6px; text-align: left; }
+.gs-campo-claro .gs-label { color: #fff0c2; }
+.gs-label { font-size: 11px; letter-spacing: .5px; color: #cbb8e8; text-transform: uppercase; }
+.gs-input { font-family: inherit; font-size: 15px; padding: 12px 12px; border-radius: 6px; border: 2px solid #3a2a52; background: #1a0f2e; color: #f4e9ff; }
+.gs-input:focus { outline: none; border-color: #ff4fd8; }
+.gs-linha-campo { display: flex; gap: 8px; }
+.gs-linha-campo .gs-input { flex: 1; }
+.gs-classes { display: grid; gap: 10px; width: 100%; max-width: 340px; }
+.gs-classe-btn { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 10px; text-align: left; padding: 12px; border-radius: 8px; border: 2px solid #3a2a52; background: #1a0f2e; color: #f4e9ff; cursor: pointer; }
+.gs-classe-btn strong { grid-column: 2; font-size: 13px; }
+.gs-classe-btn .gs-card-sub { grid-column: 2; font-size: 11px; color: #cbb8e8; }
+.gs-classe-btn .gs-card-emoji { grid-row: 1 / 3; font-size: 24px; }
+.gs-classe-ativa { border-color: #ff4fd8; background: #2a1a44; }
+
+/* ================= Gangstar: app (minha cidade, cidade, roubos, gangue, perfil) ================= */
+.gs-app { position: relative; max-width: var(--largura); min-height: 100dvh; margin: 0 auto; background: #0c0617; color: #f4e9ff; display: flex; flex-direction: column; }
+.gs-cabecalho { flex: 0 0 auto; position: sticky; top: 0; z-index: 3; display: flex; flex-direction: column; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 14px 10px; background: #150a24; border-bottom: 2px solid #3a2a52; }
+.gs-cabecalho-linha1 { display: flex; align-items: center; gap: 8px; }
+.gs-stats-topo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+.gs-stats-topo::-webkit-scrollbar { display: none; }
+.gs-stat-chip { min-width: 0; display: flex; align-items: center; justify-content: center; gap: 3px; padding: 6px 3px; border-radius: 6px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 10px; white-space: nowrap; overflow: hidden; }
+.gs-stat-chip strong { overflow: hidden; text-overflow: ellipsis; }
+.gs-stat-chip-dinheiro { grid-column: span 1; }
+.gs-stat-chip-dinheiro strong { color: #4caf7a; }
+.gs-stat-chip-vida strong { color: #ff6b6b; }
+.gs-stat-chip-vicio strong { color: #b48cff; }
+.gs-renda-cidade strong { color: #7de8a3; }
+.gs-stat-chip strong { font-size: 10px; }
+.gs-stat-chip-energia strong { color: #ffb020; }
+.gs-stat-chip-respeito strong { color: #ff4fd8; }
+.gs-stat-chip-patrimonio strong { color: #4caf7a; }
+.gs-voltar-app { position: static; width: 34px; height: 34px; font-size: 16px; flex: 0 0 auto; }
+.gs-cabecalho-info { flex: 0 1 auto; display: grid; gap: 2px; min-width: 0; }
+.gs-cabecalho-nome { font-family: "Pirata One", serif; font-weight: 400; font-size: 22px; line-height: 1; letter-spacing: 0.5px; color: #f4e9ff; text-shadow: 2px 2px 0 #7a1fa8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-cabecalho-sub { font-family: "Special Elite", monospace; font-size: 12px; color: #ffb020; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-evento-dia { margin-left: auto; flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 8px; background: #1a0f2e; border: 1px solid #ffb020; max-width: 52%; }
+.gs-evento-dia-emoji { font-size: 18px; line-height: 1; }
+.gs-evento-dia-texto { display: grid; text-align: right; min-width: 0; }
+.gs-evento-dia-texto small { font-size: 9px; color: #cbb8e8; text-transform: uppercase; letter-spacing: 0.5px; }
+.gs-evento-dia-texto strong { font-size: 11px; color: #ffd76a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs-preso-contagem { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 10px; border-radius: 8px; background: #3a0f18; border: 1px solid #e04b4b; color: #ffd0d0; font-size: 12px; }
+.gs-preso-contagem strong { font-family: "Press Start 2P", monospace; font-size: 12px; color: #ff6b6b; }
+.gs-btn-perigo { background: linear-gradient(180deg, #e04b4b, #8a1f1f); color: #fff0f0; border-color: #1a0f2e; }
+.gs-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+.gs-cabecalho-patrimonio { text-align: right; display: grid; gap: 2px; }
+.gs-cabecalho-patrimonio strong { font-size: 13px; color: #ffb020; }
+.gs-conteudo-app { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 14px calc(16px + env(safe-area-inset-bottom)); }
+.gs-abas-rodape { flex: 0 0 auto; position: sticky; bottom: 0; z-index: 4; display: grid; grid-template-columns: repeat(5, 1fr); background: #150a24; border-top: 2px solid #3a2a52; padding-bottom: env(safe-area-inset-bottom); }
+.gs-aba-btn { min-width: 0; display: grid; justify-items: center; gap: 1px; padding: 6px 2px 6px; background: none; border: none; color: #cbb8e8; cursor: pointer; position: relative; }
+.gs-aba-emoji { font-size: 17px; line-height: 1.1; }
+.gs-aba-rotulo { font-size: 8.5px; letter-spacing: .2px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.gs-aba-ativa { color: #ff4fd8; }
+
+.gs-pagina { display: flex; flex-direction: column; gap: 14px; }
+.gs-h2 { font-family: "Press Start 2P", monospace; font-size: 15px; margin: 0; color: #ffb020; }
+.gs-h3 { font-family: "Press Start 2P", monospace; font-size: 12px; margin: 10px 0 0; color: #ff4fd8; }
+.gs-p-intro { font-size: 12px; color: #cbb8e8; margin: 0; opacity: .9; }
+.gs-aviso { font-size: 12px; padding: 10px 12px; border-radius: 6px; background: #2a1a44; border: 2px solid #3a2a52; }
+.gs-aviso-msg { border-color: #ff4fd8; }
+.gs-link-voltar { align-self: flex-start; background: none; border: none; color: #cbb8e8; font-size: 12px; cursor: pointer; padding: 0; }
+
+.gs-mapa { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.gs-lote { display: grid; justify-items: center; gap: 4px; padding: 16px 6px; border-radius: 8px; border: 2px dashed #3a2a52; background: #1a0f2e; color: #f4e9ff; cursor: pointer; text-align: center; }
+.gs-lote-emoji { font-size: 22px; }
+.gs-lote-legenda { font-size: 10px; text-transform: uppercase; letter-spacing: .3px; color: #cbb8e8; }
+.gs-lote-preco { font-size: 12px; color: #ffb020; font-weight: 700; }
+.gs-lote-comprado { border-style: solid; border-color: #4caf7a; cursor: default; }
+.gs-lote-venda:active { transform: translate(2px, 2px); }
+.gs-btn-bloco { width: 100%; }
+
+.gs-lista { display: grid; gap: 8px; }
+.gs-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 2px solid #3a2a52; background: #1a0f2e; text-align: left; color: #f4e9ff; }
+.gs-card-clicavel { cursor: pointer; }
+.gs-card-emoji { font-size: 22px; flex: 0 0 auto; }
+.gs-card-corpo { flex: 1; display: grid; gap: 1px; min-width: 0; }
+.gs-card-corpo strong { font-size: 13px; }
+.gs-card-sub { font-size: 11px; color: #cbb8e8; opacity: .85; }
+.gs-card-ativo { border-color: #ff4fd8; }
+.gs-card-bloqueado { opacity: .55; }
+.gs-card-prisao { border-color: #e04b4b; }
+.gs-card-ok { border-color: #4caf7a; }
+.gs-tag { font-size: 10px; padding: 4px 8px; border-radius: 4px; background: #3a2a52; color: #ff4fd8; text-transform: uppercase; }
+.gs-btn-mini { flex: 0 0 auto; font-family: "Press Start 2P", monospace; font-size: 10px; padding: 8px 10px; border-radius: 5px; border: 2px solid #1a0f2e; background: linear-gradient(180deg, #ff8a1f, #d9480f); color: #1a0f00; cursor: pointer; white-space: nowrap; }
+.gs-btn-mini:disabled { opacity: .4; cursor: not-allowed; }
+.gs-roubo .gs-card-corpo { flex: 1 1 auto; }
+
+.gs-stat { display: grid; grid-template-columns: 70px 1fr 56px; align-items: center; gap: 8px; font-size: 11px; }
+.gs-barra-fundo { height: 10px; border-radius: 5px; background: #1a0f2e; border: 1px solid #3a2a52; overflow: hidden; }
+.gs-barra-preenchida { height: 100%; }
+.gs-grid-atributos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.gs-atributo { display: grid; justify-items: center; gap: 2px; padding: 10px 2px; border-radius: 8px; border: 2px solid #3a2a52; background: #1a0f2e; }
+.gs-atributo strong { font-size: 15px; color: #ffb020; }
+.gs-ranking-item .gs-card-emoji { font-size: 16px; min-width: 26px; text-align: center; }
+
+/* ================= Gangstar: horizonte/cena da cidade (decorativo) ================= */
+.gs-skyline { position: relative; height: 92px; margin: -16px -14px 12px; background: linear-gradient(180deg, #1a0f3a 0%, #2a1550 55%, #1c0f33 100%); overflow: hidden; border-bottom: 2px solid #3a2a52; }
+.gs-skyline-predios { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; align-items: flex-end; gap: 3px; padding: 0 4px; height: 70%; }
+.gs-skyline-predio { flex: 1; min-width: 14px; background-color: #2a1a44; background-image: radial-gradient(circle, rgba(255, 214, 120, 0.8) 1px, transparent 1.3px); background-size: 7px 8px; background-position: 3px 4px; border-top: 2px solid #3a2a52; }
+.gs-skyline-predio-0 { background-color: #241740; }
+.gs-skyline-predio-1 { background-color: #2e1a4d; }
+.gs-skyline-predio-2 { background-color: #1e1538; }
+.gs-skyline-rua { position: absolute; left: 0; right: 0; bottom: 0; height: 18px; background: #0c0617; border-top: 2px dashed #3a2a52; }
+.gs-skyline-ator { position: absolute; bottom: -2px; font-size: 13px; }
+.gs-skyline-titulo { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: "Press Start 2P", monospace; font-size: 13px; color: #ffb020; text-shadow: 2px 2px 0 #1a0f2e, 0 0 10px rgba(255, 176, 32, 0.6); }
+
+/* ================= Gangstar: predios nos lotes (Fase 2) ================= */
+.gs-lote-venda { background-image: repeating-linear-gradient(45deg, rgba(255, 176, 32, 0.12) 0 8px, transparent 8px 16px); }
+.gs-lote-construir { border-style: solid; }
+.gs-lote-predio { border-style: solid; gap: 2px; padding: 10px 6px; }
+.gs-lote-predio-emoji { font-size: 26px; }
+.gs-lote-predio-nivel { font-size: 9px; color: #ffb020; text-transform: uppercase; }
+.gs-lote-predio-producao { font-size: 10px; color: #4caf7a; }
+.gs-lote-predio-botoes { display: flex; gap: 4px; width: 100%; margin-top: 2px; }
+.gs-lote-predio-botoes .gs-btn-mini { flex: 1; font-size: 8px; padding: 6px 2px; }
+.gs-chooser { display: grid; gap: 8px; }
+.gs-chooser-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; border: 2px solid #3a2a52; background: #1a0f2e; cursor: pointer; text-align: left; color: #f4e9ff; }
+.gs-chooser-item:disabled { opacity: 0.4; cursor: not-allowed; }
+.gs-painel-gestao { border-color: #fff0c2; }
+.gs-botoes-duplos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ================= Gangstar: mapa ilustrado da cidade (v6, 11 predios) ================= */
+.gs-mapa-wrap { margin: 0 0 12px; border-radius: 12px; overflow: hidden; border: 2px solid #3a2a52; background: #2a2a2e; line-height: 0; }
+.gs-mapa-svg { display: block; width: 100%; height: auto; }
+.gs-mapa-alvo { fill: transparent; stroke: transparent; stroke-width: 6; cursor: pointer; -webkit-tap-highlight-color: transparent; outline: none; transition: fill 0.15s, stroke 0.15s; }
+.gs-mapa-alvo:hover, .gs-mapa-alvo:focus-visible { fill: rgba(255, 215, 106, 0.12); stroke: rgba(255, 215, 106, 0.85); }
+.gs-mapa-alvo-meu:hover, .gs-mapa-alvo-meu:focus-visible { fill: rgba(125, 232, 163, 0.12); stroke: rgba(125, 232, 163, 0.9); }
+.gs-mapa-moeda { animation: gs-mapa-pulsar 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes gs-mapa-pulsar { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+
+/* ================= Gangstar: popups ================= */
+.gs-popup-fundo { position: fixed; inset: 0; z-index: 1000; background: rgba(5, 2, 12, 0.75); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.gs-popup-painel { width: 100%; max-width: min(420px, calc(var(--largura) - 32px)); background: #150a24; border: 2px solid #ff4fd8; border-radius: 16px; padding: 18px 16px; display: grid; gap: 12px; max-height: 85vh; overflow-y: auto; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6); }
+.gs-popup-fechar { align-self: flex-end; background: none; border: none; color: #cbb8e8; font-size: 20px; cursor: pointer; padding: 4px 8px; }
+.gs-popup-topo { display: flex; align-items: center; justify-content: space-between; }
+
+/* ================= Gangstar: Fase 3 (crew, território, eventos) ================= */
+.gs-sub-abas { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
+.gs-sub-aba { flex: 1; font-family: "Press Start 2P", monospace; font-size: 8px; padding: 9px 6px; border-radius: 6px; border: 2px solid #3a2a52; background: #1a0f2e; color: #cbb8e8; cursor: pointer; white-space: nowrap; }
+.gs-sub-aba-ativa { border-color: #ff4fd8; color: #ff4fd8; background: #241740; }
+.gs-aviso-evento { border-color: #ffb020; background: #2a2010; color: #ffe0a3; font-size: 11px; }
+.gs-btn-mini-perigo { background: linear-gradient(180deg, #e04b4b, #8a1f1f); color: #ffe9e9; }
+.gs-lista-item-expandivel { display: grid; gap: 6px; }
+.gs-painel-equipe { display: grid; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #1a0f2e; border: 2px dashed #3a2a52; }
+.gs-membro-selecionavel { cursor: pointer; }
+.gs-membro-selecionavel input { width: 16px; height: 16px; flex: 0 0 auto; accent-color: #ff4fd8; }
+.gs-ilustracao { width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 10px; border: 2px solid #3a2a52; }
+.gs-popup-resultado-ok { border-color: #4caf7a; }
+.gs-popup-resultado-falha { border-color: #e04b4b; }
+.gs-resultado-linhas { display: grid; gap: 6px; margin: 4px 0 14px; }
+.gs-resultado-linha { margin: 0; font-size: 14px; color: #f1e9ff; }
+
+/* ================= Gangstar: recrutamento de bandidos (v4.57) ================= */
+.gs-resumo-bandidos { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 0 12px; }
+.gs-resumo-bandidos div { padding: 7px 8px; border-radius: 8px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 12px; color: #f1e9ff; }
+.gs-classe-bandido .gs-card-corpo { gap: 3px; }
+.gs-risco { color: #ff8a8a !important; }
+.gs-botoes-coluna { display: grid; gap: 5px; flex: 0 0 auto; }
+.gs-registro-gangue { gap: 4px; }
+.gs-registro-linha { margin: 0; padding: 7px 10px; border-radius: 8px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 12px; color: #f1e9ff; display: flex; justify-content: space-between; gap: 8px; }
+.gs-registro-linha small { color: #8a7aa8; white-space: nowrap; }
+.gs-sub-abas-bandidos .gs-sub-aba { white-space: normal; line-height: 1.5; font-size: 7px; padding: 8px 4px; min-width: 0; }
+
+/* ================= Gangstar v4.58: rodape, mapas, cassino, mercador, fabricas ================= */
+.gs-aba-destaque { z-index: 2; }
+.gs-aba-destaque .gs-aba-emoji { width: 54px; height: 54px; margin-top: -26px; display: grid; place-items: center; font-size: 26px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff7be6, #a01f8f 70%); border: 3px solid #150a24; box-shadow: 0 0 0 2px #ff4fd8, 0 6px 18px rgba(255, 79, 216, 0.45); }
+.gs-aba-destaque .gs-aba-rotulo { color: #ff9ff0; font-weight: 700; }
+.gs-aba-destaque.gs-aba-ativa .gs-aba-emoji { box-shadow: 0 0 0 2px #fff, 0 0 22px rgba(255, 79, 216, 0.85); }
+
+.gs-mapa-wrap { position: relative; }
+.gs-mapa-olho { position: absolute; top: 8px; right: 8px; z-index: 3; width: 36px; height: 36px; border-radius: 50%; border: 2px solid #3a2a52; background: rgba(21, 10, 36, 0.85); font-size: 17px; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+.gs-mapa-olho-ativo { border-color: #ffd76a; box-shadow: 0 0 10px rgba(255, 215, 106, 0.5); }
+.gs-tag-mapa-fundo { fill: rgba(16, 8, 30, 0.88); stroke: #ffd76a; stroke-width: 3; }
+.gs-tag-mapa-meu { stroke: #7de8a3; }
+.gs-tag-mapa-texto { fill: #fff3cf; font-family: system-ui, sans-serif; font-weight: 700; }
+
+.gs-mercador-botao { position: absolute; right: 8px; bottom: 8px; z-index: 3; display: flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 999px; border: 2px solid #3cf2ff; background: rgba(10, 4, 24, 0.9); color: #e8fdff; font-size: 12px; font-weight: 700; line-height: 1; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 0 6px #3cf2ff, 0 0 14px rgba(60, 242, 255, 0.6), inset 0 0 6px rgba(60, 242, 255, 0.4); animation: gs-neon 1.4s ease-in-out infinite; }
+.gs-mercador-botao span { font-size: 15px; }
+@keyframes gs-neon { 0%, 100% { box-shadow: 0 0 6px #3cf2ff, 0 0 14px rgba(60, 242, 255, 0.6); border-color: #3cf2ff; } 50% { box-shadow: 0 0 10px #ff4fd8, 0 0 22px rgba(255, 79, 216, 0.7); border-color: #ff4fd8; } }
+.gs-mercador-dica { margin-top: -6px; }
+.gs-mercador-painel { border-color: #3cf2ff; }
+
+.gs-btn-cassino { background: linear-gradient(180deg, #ffd76a, #c8860d); color: #2a1500; border-color: #1a0f2e; margin-top: 4px; }
+
+.gs-slots-equip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.gs-slot-equip { display: grid; justify-items: center; gap: 3px; padding: 10px 4px; border-radius: 10px; border: 2px dashed #3a2a52; background: #1a0f2e; color: #f1e9ff; cursor: pointer; text-align: center; min-width: 0; }
+.gs-slot-equip strong { font-size: 11px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.gs-slot-equip small { font-size: 10px; color: #cbb8e8; }
+.gs-slot-emoji { font-size: 26px; }
+.gs-slot-cheio { border-style: solid; border-color: #ff4fd8; }
+.gs-slot-bloqueado { opacity: 0.5; cursor: default; }
+.gs-escolha-equip { margin-bottom: 12px; }
+
+.gs-ok { color: #7de8a3 !important; }
+.gs-contrato .gs-card-corpo { gap: 4px; }
+.gs-contrato-itens { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; }
+
+.gs-cassino-fichas { display: flex; gap: 6px; justify-content: center; margin: 4px 0 12px; }
+.gs-ficha { width: 48px; height: 48px; border-radius: 50%; border: 3px dashed #fff; background: #8a1f1f; color: #fff; font-weight: 800; font-size: 12px; cursor: pointer; }
+.gs-ficha:nth-child(2) { background: #1f4d8a; }
+.gs-ficha:nth-child(3) { background: #1f7a3a; }
+.gs-ficha:nth-child(4) { background: #222; }
+.gs-ficha:nth-child(5) { background: #6a1fa8; }
+.gs-ficha-ativa { box-shadow: 0 0 0 3px #ffd76a, 0 0 14px rgba(255, 215, 106, 0.7); transform: translateY(-2px); }
+.gs-ficha:disabled { opacity: 0.35; }
+.gs-cassino-mesa { display: grid; gap: 10px; padding: 14px 12px; border-radius: 14px; background: radial-gradient(circle at 50% 0%, #1e6b3c, #0e3a20 75%); border: 3px solid #6b4a1e; }
+.gs-cassino-mesa .gs-p-intro, .gs-cassino-mesa .gs-dica { color: #e2f5e8; }
+.gs-cassino-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.gs-cassino-opcao { display: grid; gap: 1px; padding: 8px 4px; border-radius: 8px; border: 2px solid rgba(255, 255, 255, 0.25); background: rgba(0, 0, 0, 0.25); color: #fff; font-size: 12px; cursor: pointer; }
+.gs-cassino-opcao small { font-size: 10px; color: #ffd76a; }
+.gs-cassino-opcao-ativa { border-color: #ffd76a; background: rgba(255, 215, 106, 0.18); }
+.gs-roleta-numero { display: grid; grid-template-columns: 1fr 90px; gap: 6px; }
+.gs-roleta-bola { margin: 0 auto; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-size: 30px; font-weight: 800; color: #fff; border: 5px solid #ffd76a; }
+.gs-roleta-vermelho { background: #c0262d; }
+.gs-roleta-preto { background: #111; }
+.gs-roleta-verde { background: #1f8a3a; }
+.gs-mao { display: grid; gap: 4px; }
+.gs-mao-titulo { font-size: 12px; color: #e2f5e8; }
+.gs-mao-titulo em { color: #ffd76a; font-style: normal; }
+.gs-mao-fora { opacity: 0.45; }
+.gs-cartas { display: flex; gap: 5px; flex-wrap: wrap; }
+.gs-carta { width: 40px; height: 56px; border-radius: 6px; background: #fff; color: #111; display: grid; place-items: center; font-weight: 800; font-size: 15px; border: 1px solid #999; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); }
+.gs-carta-vermelha { color: #c0262d; }
+.gs-carta-verso { background: repeating-linear-gradient(45deg, #8a1f1f 0 5px, #6a1515 5px 10px); color: transparent; }
+.gs-carta-vazia { background: rgba(0, 0, 0, 0.2); border: 1px dashed rgba(255, 255, 255, 0.35); box-shadow: none; }
+.gs-botoes-triplos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gs-slot-rolos { display: flex; justify-content: center; gap: 8px; padding: 12px; background: #120a1e; border-radius: 12px; border: 3px solid #ffd76a; }
+.gs-slot-rolo { width: 70px; height: 76px; display: grid; place-items: center; font-size: 42px; background: #fff; border-radius: 8px; }
+.gs-slot-tabela { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: center; font-size: 12px; color: #e2f5e8; }
+.gs-poker-ias { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gs-poker-centro { padding: 8px; border-radius: 10px; background: rgba(0, 0, 0, 0.2); }
+.gs-poker-log { display: grid; gap: 2px; font-size: 11px; color: #cfe8d6; }
+
+/* ---------- Gangstar v4.59: nivel no topo, ajuda "?", porto, capo, lojas, cassino, missoes ---------- */
+.gs-nivel-quadro { flex: 0 0 auto; width: 42px; height: 42px; display: grid; place-items: center; align-content: center; gap: 1px; padding: 0; border-radius: 8px; border: 2px solid #ffb020; background: linear-gradient(180deg, #3a1f5c, #1a0f2e); color: #fff; cursor: pointer; box-shadow: 0 0 0 2px #150a24, 0 0 10px rgba(255, 176, 32, 0.35); }
+.gs-nivel-quadro small { font-family: "Press Start 2P", monospace; font-size: 6px; color: #ffb020; letter-spacing: 0.5px; }
+.gs-nivel-quadro strong { font-family: "Press Start 2P", monospace; font-size: 14px; line-height: 1; }
+.gs-aba-badge { position: absolute; top: 2px; right: calc(50% - 22px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #e04b4b; color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; border: 1px solid #150a24; }
+.gs-btn-sair { margin-top: 14px; background: #1a0f2e; border: 2px solid #3a2a52; color: #cbb8e8; }
+
+.gs-titulo-ajuda { display: flex; align-items: center; gap: 8px; }
+.gs-titulo-ajuda .gs-h2 { margin-bottom: 0; }
+.gs-btn-ajuda { flex: 0 0 auto; width: 24px; height: 24px; display: grid; place-items: center; padding: 0; border-radius: 50%; border: 2px solid #ffb020; background: #1a0f2e; color: #ffb020; font-family: "Press Start 2P", monospace; font-size: 10px; cursor: pointer; }
+.gs-ajuda-texto { margin: 6px 0 0; font-size: 14px; line-height: 1.5; color: #e9dcff; }
+
+.gs-estrelas { display: block; font-size: 12px; letter-spacing: 1px; color: #ffcc33; line-height: 1.2; }
+.gs-qualidade-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 10px; font-size: 13px; color: #e9dcff; }
+.gs-qualidade-linha .gs-estrelas { display: inline; font-size: 14px; }
+.gs-qualidade-linha small { width: 100%; color: #9d8bbd; font-size: 11px; }
+
+/* porto: a imagem e o mapa, os contratos ficam por cima */
+.gs-porto-mapa { position: relative; width: 100%; aspect-ratio: 880 / 1196; border-radius: 12px; overflow: hidden; border: 3px solid #3a2a52; margin: 6px 0 12px; background: #0b2a3a; }
+.gs-porto-mapa img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
+.gs-porto-contrato { position: absolute; transform: translate(-50%, -50%); width: min(42%, 170px); display: grid; gap: 2px; padding: 7px 8px; border-radius: 10px; border: 2px solid #ffb020; background: rgba(21, 10, 36, 0.88); color: #fff; text-align: center; font-size: 12px; line-height: 1.25; cursor: pointer; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55); }
+.gs-porto-contrato strong { font-size: 12px; }
+.gs-porto-contrato small { font-size: 10px; color: #cbb8e8; }
+.gs-porto-pronto { border-color: #4caf7a; box-shadow: 0 0 0 2px rgba(76, 175, 122, 0.4), 0 4px 14px rgba(0, 0, 0, 0.55); animation: gs-pulsar 1.6s ease-in-out infinite; }
+.gs-porto-feito { opacity: 0.55; border-color: #5b4a78; }
+.gs-porto-navios { position: absolute; top: 8px; left: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 4px; z-index: 2; pointer-events: none; }
+.gs-porto-navio { padding: 3px 7px; border-radius: 6px; background: rgba(11, 42, 58, 0.9); border: 1px solid #5ac8fa; color: #e6f7ff; font-size: 11px; }
+.gs-porto-relogio { position: absolute; bottom: 8px; right: 8px; padding: 3px 8px; border-radius: 6px; background: rgba(21, 10, 36, 0.88); color: #ffb020; font-size: 11px; z-index: 2; }
+@keyframes gs-pulsar { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.04); } }
+
+/* emboscada: capo da semana e modo grupo */
+.gs-capo { border: 2px solid #e04b4b; background: linear-gradient(135deg, #3a0f1a, #1a0f2e); box-shadow: 0 0 14px rgba(224, 75, 75, 0.3); }
+.gs-toggle-grupo { display: flex; align-items: center; gap: 10px; margin: 10px 0; padding: 10px 12px; border-radius: 10px; border: 1px solid #3a2a52; background: #1a0f2e; color: #e9dcff; font-size: 13px; cursor: pointer; }
+.gs-toggle-grupo input { width: 18px; height: 18px; accent-color: #ff4fd8; }
+
+/* lojas */
+.gs-loja { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #3a2a52; }
+.gs-loja-resumo, .gs-loja-demanda { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.gs-loja-resumo span, .gs-loja-demanda span { padding: 4px 8px; border-radius: 6px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 11px; color: #e9dcff; }
+.gs-demanda-alta { border-color: #4caf7a !important; color: #7de8a3 !important; }
+.gs-demanda-baixa { border-color: #e04b4b !important; color: #ff8a8a !important; }
+.gs-botoes-mini { display: flex; gap: 4px; flex: 0 0 auto; }
+
+/* cassino: jackpot, torneio, agiota */
+.gs-jackpot { display: grid; justify-items: center; gap: 2px; padding: 8px; border-radius: 10px; background: #1a0f00; border: 2px solid #ffcc33; text-align: center; box-shadow: inset 0 0 18px rgba(255, 204, 51, 0.25); }
+.gs-jackpot small { font-size: 10px; color: #ffe08a; }
+.gs-jackpot strong { font-family: "Press Start 2P", monospace; font-size: 16px; color: #ffcc33; text-shadow: 0 0 8px rgba(255, 204, 51, 0.6); }
+.gs-torneio-status { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; margin-bottom: 8px; padding: 8px 10px; border-radius: 10px; background: #1a0f2e; border: 1px solid #ffb020; font-size: 12px; color: #e9dcff; }
+.gs-torneio-status strong { color: #ffcc33; }
+.gs-placar-torneio { display: grid; gap: 3px; margin-top: 10px; padding: 8px 10px; border-radius: 10px; background: #150a24; border: 1px solid #3a2a52; font-size: 12px; color: #cbb8e8; }
+.gs-placar-voce { color: #ffcc33; font-weight: 700; }
+.gs-agiota { border: 2px solid #e04b4b; background: #2a0f16; margin-bottom: 10px; }
+.gs-agiota-opcoes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+
+/* missoes */
+.gs-capitulo { display: grid; gap: 8px; margin-top: 10px; padding: 14px 12px; border-radius: 12px; background: linear-gradient(160deg, #2a1640, #150a24); border: 2px solid #ffb020; }
+.gs-capitulo-num { font-family: "Press Start 2P", monospace; font-size: 8px; color: #ffb020; letter-spacing: 1px; }
+.gs-capitulo > strong { font-family: "Pirata One", serif; font-size: 24px; font-weight: 400; color: #fff; }
+.gs-capitulo p { margin: 0; font-size: 13px; color: #cbb8e8; line-height: 1.45; }
+.gs-capitulo-fim { text-align: center; }
+.gs-objetivos { display: grid; gap: 6px; }
+.gs-objetivo { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 8px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 13px; color: #e9dcff; }
+.gs-objetivo-corpo { flex: 1; display: grid; gap: 4px; min-width: 0; }
+.gs-objetivo small { flex: 0 0 auto; font-size: 11px; color: #ffb020; }
+.gs-objetivo-ok { border-color: #4caf7a; }
+.gs-objetivo-ok small { color: #7de8a3; }
+.gs-capitulo-premio { font-size: 12px; color: #ffe08a; }
+.gs-capitulos-lista { display: grid; gap: 4px; margin-top: 12px; font-size: 12px; color: #6f5d8f; }
+.gs-cap-feito { color: #7de8a3; }
+.gs-cap-atual { color: #ffb020; font-weight: 700; }
+
+/* ---------- Gangstar v4.60: saldo negativo, internacao, porto, capo em rodadas, itens raros, escolha ---------- */
+.gs-negativo { color: #ff4d4d !important; }
+.gs-internado { background: #0f2a3a !important; border-color: #5ac8fa !important; color: #d8f3ff !important; }
+.gs-porto-contrato > span { font-size: 14px; line-height: 1; }
+.gs-porto-contrato strong { display: block; font-size: 11px; line-height: 1.2; white-space: normal; }
+.gs-porto-contrato small { font-size: 11px; color: #ffcc33; font-weight: 700; }
+
+.gs-capo-painel { display: grid; gap: 8px; margin-bottom: 12px; }
+.gs-capo-vida { position: relative; height: 16px; margin: 4px 0; border-radius: 8px; background: #2a0f16; border: 1px solid #e04b4b; overflow: hidden; }
+.gs-capo-vida-cheia { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #e04b4b, #ff8a3d); transition: width 0.4s ease; }
+.gs-capo-vida span { position: relative; display: block; text-align: center; font-size: 10px; line-height: 14px; color: #fff; font-weight: 700; text-shadow: 0 1px 2px #000; }
+.gs-batalha-capo { display: grid; gap: 8px; padding: 10px; border-radius: 12px; background: #1a0a12; border: 2px solid #e04b4b; }
+.gs-batalha-topo { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: #ffd0d0; }
+.gs-batalha-topo strong { font-family: "Press Start 2P", monospace; font-size: 10px; color: #ffb020; }
+.gs-golpe-capo { padding: 8px; border-radius: 8px; background: #2a0f16; font-size: 12px; color: #ffd0d0; line-height: 1.4; }
+.gs-golpe-capo em { display: block; margin-top: 4px; color: #7de8a3; font-style: normal; }
+.gs-golpes { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.gs-golpe { display: grid; justify-items: center; gap: 2px; padding: 8px 6px; border-radius: 10px; border: 2px solid #3a2a52; background: #150a24; color: #fff; cursor: pointer; text-align: center; }
+.gs-golpe:not(:disabled):active { transform: scale(0.97); }
+.gs-golpe:disabled { opacity: 0.4; cursor: not-allowed; }
+.gs-golpe > span { font-size: 22px; }
+.gs-golpe strong { font-size: 12px; }
+.gs-golpe small { font-size: 10px; color: #cbb8e8; line-height: 1.25; }
+.gs-batalha-log { display: grid; gap: 3px; font-size: 11px; color: #cbb8e8; }
+.gs-btn-link { justify-self: start; padding: 2px 0; border: 0; background: none; color: #ffb020; font-size: 12px; font-weight: 700; cursor: pointer; }
+
+.gs-card-raro { border-width: 2px !important; box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.04); }
+
+.gs-escolha-historia { display: grid; gap: 8px; padding-top: 6px; border-top: 1px dashed #5b4a78; }
+.gs-escolha-historia > strong { font-size: 14px; color: #fff; }
+.gs-escolha-historia .gs-btn { display: grid; gap: 4px; }
+.gs-escolha-historia .gs-btn small { font-family: inherit; font-size: 11px; font-weight: 400; text-transform: none; letter-spacing: 0; opacity: 0.85; }
+/* o dinheiro ganha mais espaco no topo (cabe "R$ -270,00") */
+.gs-stats-topo { grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)); }
+.gs-stat-chip-dinheiro strong.gs-negativo { color: #ff4d4d; }
+
+/* ---------- Gangstar v4.61: notas de qualidade, linhas de producao ---------- */
+.gs-nota { display: inline-block; min-width: 18px; padding: 1px 4px; border-radius: 4px; font-family: "Press Start 2P", monospace; font-size: 7px; line-height: 10px; text-align: center; vertical-align: middle; border: 1px solid currentColor; background: rgba(0, 0, 0, 0.35); }
+.gs-nota-c { color: #cd7f32; }
+.gs-nota-b { color: #c9d1db; }
+.gs-nota-a { color: #4cd07a; }
+.gs-nota-s { color: #ffd23f; text-shadow: 0 0 6px rgba(255, 210, 63, 0.5); }
+.gs-nota-ss { color: #fff; border-color: #ff4fd8; background: linear-gradient(90deg, #19d3c5, #ff4fd8); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); box-shadow: 0 0 8px rgba(255, 79, 216, 0.5); }
+.gs-card-corpo .gs-nota { align-self: flex-start; margin: 2px 0; }
+
+.gs-linhas-producao { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin: 8px 0 10px; }
+.gs-linha { display: grid; justify-items: center; align-content: start; gap: 2px; min-width: 0; padding: 6px 3px; border-radius: 8px; border: 2px solid #3a2a52; background: #150a24; color: #fff; text-align: center; cursor: pointer; }
+.gs-linha > span { font-size: 20px; line-height: 1.1; }
+.gs-linha strong { width: 100%; font-size: 9px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-linha small { font-size: 8px; line-height: 1.2; color: #cbb8e8; }
+.gs-linha-sel { border-color: #ffb020; box-shadow: 0 0 8px rgba(255, 176, 32, 0.4); }
+.gs-linha-bloqueada { opacity: 0.45; cursor: default; border-style: dashed; }
+.gs-titulo-ajuda .gs-h3 { margin: 0; }
+.gs-loja .gs-titulo-ajuda { margin: 4px 0 8px; }
+
+/* ---------- Gangstar v4.62: pop-up de eventos, boate por secoes, xp dos bandidos ---------- */
+button.gs-evento-dia { font: inherit; color: inherit; cursor: pointer; text-align: left; }
+button.gs-evento-dia:active { transform: scale(0.97); }
+.gs-eventos-semana { display: grid; gap: 6px; margin-top: 10px; }
+.gs-evento-linha { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; border-radius: 10px; background: #1a0f2e; border: 1px solid #3a2a52; }
+.gs-evento-linha > div { display: grid; gap: 1px; min-width: 0; }
+.gs-evento-linha small { font-size: 10px; color: #9d8bbd; text-transform: uppercase; letter-spacing: 0.5px; }
+.gs-evento-linha strong { font-size: 13px; color: #fff; }
+.gs-evento-linha span { font-size: 12px; color: #cbb8e8; line-height: 1.35; }
+.gs-evento-linha-emoji { font-size: 22px; line-height: 1.2; }
+.gs-evento-hoje { border-color: #ffb020; box-shadow: 0 0 10px rgba(255, 176, 32, 0.3); }
+.gs-evento-hoje small { color: #ffb020; font-weight: 700; }
+
+.gs-boate-menu { display: grid; gap: 8px; }
+.gs-boate-status { display: flex; justify-content: space-around; gap: 6px; padding: 6px; border-radius: 8px; background: #150a24; border: 1px solid #3a2a52; font-size: 12px; color: #e9dcff; }
+.gs-boate-secoes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.gs-boate-secao { display: grid; justify-items: center; gap: 2px; padding: 10px 4px; border-radius: 12px; border: 2px solid #ff4fd8; background: linear-gradient(180deg, #3a1656, #1a0a2a); color: #fff; cursor: pointer; box-shadow: 0 0 10px rgba(255, 79, 216, 0.25); }
+.gs-boate-secao > span { font-size: 26px; line-height: 1.1; }
+.gs-boate-secao strong { font-family: "Press Start 2P", monospace; font-size: 8px; letter-spacing: 0.5px; }
+.gs-boate-secao small { font-size: 10px; color: #e0b8ff; }
+.gs-boate-secao-ativa { border-color: #ffb020; background: linear-gradient(180deg, #5a2a10, #2a1408); box-shadow: 0 0 14px rgba(255, 176, 32, 0.45); }
+
+.gs-xp-bandido { position: relative; height: 12px; margin-top: 4px; border-radius: 6px; background: #150a24; border: 1px solid #3a2a52; overflow: hidden; }
+.gs-xp-bandido > div { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #4caf7a, #7de8a3); }
+.gs-xp-bandido > span { position: relative; display: block; text-align: center; font-size: 9px; line-height: 10px; color: #fff; text-shadow: 0 1px 1px #000; }
+.gs-boate-menu, .gs-boate-menu .gs-lista, .gs-boate-menu .gs-card, .gs-boate-menu .gs-card-corpo { min-width: 0; }
+.gs-btn-boate { flex: 0 0 auto; display: grid; justify-items: center; gap: 2px; min-width: 82px; line-height: 1.1; }
+.gs-btn-boate small { font-family: inherit; font-size: 10px; letter-spacing: 0; opacity: 0.95; white-space: nowrap; }
+
+/* ---------- Gangstar v4.63: nota discreta ao lado do nome, porto translucido, bolsa ---------- */
+.gs-nota,
+.gs-card-corpo .gs-nota { display: inline-flex; align-items: center; justify-content: center; align-self: auto; width: auto; min-width: 15px; height: 15px; margin: 0 0 0 6px; padding: 0 3px; border-radius: 3px; font-size: 7px; line-height: 1; vertical-align: 2px; flex: 0 0 auto; box-sizing: border-box; }
+.gs-nota-ss { box-shadow: 0 0 5px rgba(255, 79, 216, 0.45); }
+.gs-qualidade-linha .gs-nota { margin-left: 2px; }
+
+.gs-porto-contrato { background: rgba(21, 10, 36, 0.5); border-color: rgba(255, 176, 32, 0.75); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9); }
+.gs-porto-pronto { border-color: rgba(76, 175, 122, 0.9); }
+.gs-porto-feito { opacity: 0.45; }
+.gs-porto-navio, .gs-porto-relogio { background: rgba(11, 42, 58, 0.55); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+
+.gs-bolsa { display: grid; gap: 10px; }
+.gs-bolsa-resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.gs-bolsa-resumo > div { display: grid; gap: 2px; padding: 8px; border-radius: 10px; background: #150a24; border: 1px solid #3a2a52; text-align: center; min-width: 0; }
+.gs-bolsa-resumo small { font-size: 10px; color: #9d8bbd; }
+.gs-bolsa-resumo strong { font-size: 13px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-bolsa-lista { display: grid; gap: 4px; }
+.gs-bolsa-linha { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border-radius: 10px; border: 1px solid #3a2a52; background: #1a0f2e; color: #fff; text-align: left; cursor: pointer; font: inherit; }
+.gs-bolsa-linha:active { transform: scale(0.99); }
+.gs-bolsa-emoji { font-size: 20px; flex: 0 0 auto; }
+.gs-bolsa-nome { flex: 1; display: grid; min-width: 0; }
+.gs-bolsa-nome strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gs-bolsa-nome small { font-size: 10px; color: #9d8bbd; }
+.gs-bolsa-preco { display: grid; justify-items: end; flex: 0 0 auto; }
+.gs-bolsa-preco strong { font-size: 14px; font-variant-numeric: tabular-nums; }
+.gs-bolsa-preco small { font-size: 11px; font-variant-numeric: tabular-nums; }
+.gs-alta { color: #4cd07a !important; }
+.gs-baixa { color: #ff5a5a !important; }
+.gs-bolsa-cotacao { display: flex; align-items: baseline; gap: 10px; margin: 8px 0 4px; }
+.gs-bolsa-cotacao strong { font-size: 24px; color: #fff; font-variant-numeric: tabular-nums; }
+.gs-bolsa-cotacao span { font-size: 12px; }
+.gs-bolsa-grafico { display: grid; gap: 2px; padding: 8px; border-radius: 10px; background: #0e0619; border: 1px solid #3a2a52; }
+.gs-bolsa-grafico svg { width: 100%; height: 140px; display: block; }
+.gs-bolsa-eixo { display: flex; justify-content: space-between; font-size: 10px; color: #9d8bbd; }
+.gs-bolsa-legenda { font-size: 10px; color: #6f5d8f; text-align: center; }
+.gs-bolsa-posicao { display: grid; gap: 2px; margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: #1a0f2e; border: 1px solid #ffb020; font-size: 12px; color: #e9dcff; }
+.gs-bolsa-ordem { display: flex; align-items: flex-end; gap: 8px; margin-top: 8px; }
+.gs-bolsa-ordem label { flex: 1; display: grid; gap: 4px; min-width: 0; font-size: 11px; color: #cbb8e8; }
+.gs-bolsa-ordem input { width: 100%; box-sizing: border-box; padding: 10px; border-radius: 8px; border: 2px solid #3a2a52; background: #0e0619; color: #fff; font-size: 16px; }
+.gs-bolsa-ordem input:focus { outline: none; border-color: #ffb020; }
+.gs-bolsa-ordem .gs-btn { flex: 0 0 auto; min-width: 104px; }
+
+/* ---------- Gangstar v4.64: botao Roubos mais alto (rotulo alinhado), tela bloqueada, pop-up de nivel ---------- */
+/* o circulo ocupa no fluxo a mesma altura do emoji normal (~19px), entao o rotulo fica na mesma linha */
+.gs-aba-destaque .gs-aba-emoji { margin-top: -35px; }
+.gs-tela-bloqueada { display: grid; justify-items: center; gap: 10px; margin-top: 40px; padding: 24px 18px; border-radius: 14px; background: #1a0f2e; border: 2px dashed #3a2a52; text-align: center; }
+.gs-tela-bloqueada > span { font-size: 44px; }
+.gs-tela-bloqueada strong { font-family: "Press Start 2P", monospace; font-size: 11px; line-height: 1.6; color: #ffb020; }
+.gs-tela-bloqueada p { margin: 0; font-size: 13px; color: #cbb8e8; line-height: 1.5; }
+.gs-subiu-nivel { text-align: center; }
+.gs-subiu-numero { display: grid; place-items: center; width: 84px; height: 84px; margin: 6px auto 10px; border-radius: 14px; border: 3px solid #ffb020; background: linear-gradient(180deg, #3a1f5c, #1a0f2e); font-family: "Press Start 2P", monospace; font-size: 30px; color: #fff; box-shadow: 0 0 22px rgba(255, 176, 32, 0.5); animation: gs-subiu 0.6s ease-out; }
+@keyframes gs-subiu { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.12); } 100% { transform: scale(1); opacity: 1; } }
+.gs-subiu-lista { display: grid; gap: 6px; margin: 10px 0 14px; text-align: left; }
+.gs-subiu-lista p { margin: 0; padding: 8px 10px; border-radius: 8px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 13px; line-height: 1.4; color: #e9dcff; }
+.gs-subiu-lista small { display: block; margin: 4px 0 0; font-size: 10px; color: #ffb020; font-family: "Press Start 2P", monospace; }
+
