@@ -29,8 +29,9 @@ import {
   precoArmaFinal,
   sacarBanco,
   treinosRestantesHoje,
+  saldoAceitandoSujo,
 } from "@/lib/gangstar";
-import { NIVEL_BOLSA, NIVEL_MERCADOR, consertarItemRaro, custoConserto, durabilidadeItem, durabilidadeMax, qtdItem } from "@/lib/gangstar";
+import { CUSTO_ADVOGADO, DIAS_ADVOGADO, NIVEL_BOLSA, NIVEL_MERCADOR, advogadoAtivo, contratarAdvogado, consertarItemRaro, custoConserto, durabilidadeItem, durabilidadeMax, qtdItem } from "@/lib/gangstar";
 import { ITENS_RAROS, RARIDADES } from "@/lib/gangstarItens";
 import { MapaHub } from "../mapa/MapaHub";
 import { MercadorPainel } from "../MercadorPainel";
@@ -223,7 +224,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
                           🔧 {d}/{durabilidadeMax(i)} usos{d <= 0 ? " · QUEBRADO" : ""}
                         </span>
                       </div>
-                      <button className="gs-btn-mini" disabled={custo <= 0 || p.dinheiro < custo} onClick={() => rodar(consertarItemRaro(save, i.id), `🔧 ${i.nome} consertado!`)}>
+                      <button className="gs-btn-mini" disabled={custo <= 0 || saldoAceitandoSujo(p) < custo} onClick={() => rodar(consertarItemRaro(save, i.id), `🔧 ${i.nome} consertado!`)}>
                         {custo <= 0 ? "Inteiro" : `Consertar ${formatarDinheiro(custo)}`}
                       </button>
                     </div>
@@ -325,6 +326,20 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
 
         {visao === "policia" && (
           <div className="gs-lista">
+            <div className="gs-card gs-card-advogado">
+              <span className="gs-card-emoji">⚖️</span>
+              <div className="gs-card-corpo">
+                <strong>Advogado</strong>
+                <span className="gs-card-sub">
+                  {advogadoAtivo(save)
+                    ? `Contratado até ${new Date(save.advogadoAte!).toLocaleDateString("pt-BR")}: −30% de alerta da Federal e fiança pela metade.`
+                    : `${formatarDinheiro(CUSTO_ADVOGADO)} (só dinheiro limpo) por ${DIAS_ADVOGADO} dias: −30% de alerta da Federal ao lavar e fiança pela metade.`}
+                </span>
+              </div>
+              <button className="gs-btn-mini" disabled={p.dinheiro < CUSTO_ADVOGADO} onClick={() => rodar(contratarAdvogado(save), "⚖️ Advogado contratado.")}>
+                {advogadoAtivo(save) ? "Renovar" : "Contratar"}
+              </button>
+            </div>
             {p.preso?.hospital ? (
               <div className="gs-card gs-card-prisao">
                 <span className="gs-card-emoji">🏥</span>
@@ -342,7 +357,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
                     <span className="gs-card-sub">Liberdade em {tempoRestante(p.preso.ate)}</span>
                   </div>
                 </div>
-                <button className="gs-btn gs-btn-principal gs-btn-bloco" disabled={p.dinheiro < custoFiancaAtual(save)} onClick={pagar}>
+                <button className="gs-btn gs-btn-principal gs-btn-bloco" disabled={saldoAceitandoSujo(p) < custoFiancaAtual(save)} onClick={pagar}>
                   Pagar fiança — {formatarDinheiro(custoFiancaAtual(save))}
                 </button>
                 <button className="gs-btn gs-btn-perigo gs-btn-bloco" disabled={!podeFazerMotim(save)} onClick={motim}>

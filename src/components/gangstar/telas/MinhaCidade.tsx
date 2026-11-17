@@ -32,6 +32,15 @@ import {
   linhasFabrica,
   instLinha,
   consumirNaBoate,
+  capacidadeLavagem,
+  ehFachada,
+  fachadaFechada,
+  lavarDinheiro,
+  sujo,
+  suspeitaAtual,
+  taxaLavagem,
+  totalNaLavagem,
+  horasParaLavar,
   VICIO_PERIGO,
   CATEGORIAS_LOJA,
   abastecerLoja,
@@ -172,6 +181,15 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
           </span>
         </div>
       </div>
+      {totalNaLavagem(save) > 0 && (
+        <div className="gs-card gs-renda-cidade">
+          <span className="gs-card-emoji">🧺</span>
+          <div className="gs-card-corpo">
+            <strong>{formatarDinheiro(totalNaLavagem(save))} sendo lavados</strong>
+            <span className="gs-card-sub">Fica pronto em cerca de {Math.ceil(horasParaLavar(save) * 60)} min · o limpo cai sozinho no seu saldo</span>
+          </div>
+        </div>
+      )}
 
       {aberto && slotAberto && defAberto && (
         <div className="gs-popup-fundo" onClick={() => setAberto(null)}>
@@ -336,6 +354,7 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
                     </button>
                   )}
                 </div>
+                {ehFachada(instAberta.tipo) && <PainelLavagem save={save} predioId={aberto} rodar={(r, msg) => rodar(r, msg, false)} />}
                 {instAberta.tipo === "boate" && (
                   <>
                     <h3 className="gs-h3">🪩 Curtir na sua boate</h3>
@@ -496,6 +515,86 @@ function PainelLoja({
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ---------- Lavagem de dinheiro (fachadas: boate, hotel e lojas) ----------
+
+function PainelLavagem({
+  save,
+  predioId,
+  rodar,
+}: {
+  save: GangstarSave;
+  predioId: string;
+  rodar: (r: { save: GangstarSave; erro?: string }, msg?: string) => void;
+}) {
+  const [valor, setValor] = useState("");
+  const inst = save.predios[predioId];
+  if (!inst) return null;
+  const fila = Math.round(inst.lavagem?.fila ?? 0);
+  const cap = capacidadeLavagem(save, inst);
+  const taxa = taxaLavagem(save, inst.tipo);
+  const fechado = fachadaFechada(inst);
+  const alerta = suspeitaAtual(save);
+  const sujoAgora = sujo(save.personagem);
+
+  const lavar = () => {
+    const limpo = valor.replace(/\D/g, "");
+    const r = lavarDinheiro(save, predioId, limpo ? Number(limpo) : null);
+    if (r.erro) return rodar(r);
+    setValor("");
+    if (r.batida) {
+      const extra = [
+        r.batida.preso ? "Você foi preso." : "",
+        r.batida.contadoresPresos.length ? `Contadores presos: ${r.batida.contadoresPresos.join(", ")}.` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return rodar(r, `🚔 Batida fiscal! A Federal apreendeu ${formatarDinheiro(r.batida.perdeu)} e lacrou esta fachada por 2h. ${extra}`);
+    }
+    rodar(r, `🧺 ${formatarDinheiro(r.valor ?? 0)} na fila de lavagem.`);
+  };
+
+  return (
+    <div className="gs-lavagem">
+      <TituloComAjuda
+        pequeno
+        titulo="🧺 Lavar dinheiro"
+        ajuda={
+          <>
+            <p>
+              Coloque dinheiro sujo na fila desta fachada. Ela lava {formatarDinheiro(cap)} por hora (cresce com o nível) e fica com {Math.round(taxa * 100)}% de taxa — o resto
+              volta para você como dinheiro limpo, aos poucos.
+            </p>
+            <p>Lavar muito de uma vez sobe o alerta da Polícia Federal (+1% a cada R$ 5.000). Acima de 60%, pode ter batida fiscal; acima de 90%, prisão.</p>
+            <p>Contadores na gangue reduzem a taxa e o alerta; o advogado (na Delegacia) e o item raro Livro-caixa duplo também reduzem o alerta.</p>
+          </>
+        }
+      />
+      <div className="gs-loja-resumo">
+        <span>🩸 Sujo: {formatarDinheiro(sujoAgora)}</span>
+        <span>🧺 Na fila: {formatarDinheiro(fila)}</span>
+        <span>
+          ⏱️ {formatarDinheiro(cap)}/h · taxa {Math.round(taxa * 100)}%
+        </span>
+        <span className={alerta > 60 ? "gs-risco" : ""}>🚨 Alerta {Math.round(alerta)}%</span>
+      </div>
+      {fila > 0 && cap > 0 && <p className="gs-dica">Termina em cerca de {Math.ceil((fila / cap) * 60)} min.</p>}
+      {fechado ? (
+        <div className="gs-aviso">🚔 Lacrada pela Federal até {new Date(inst.fechadoAte!).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}. A fila volta a andar depois.</div>
+      ) : (
+        <div className="gs-bolsa-ordem">
+          <label>
+            <span>Quanto lavar (vazio = tudo)</span>
+            <input inputMode="numeric" placeholder="vazio = tudo" value={valor} onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))} />
+          </label>
+          <button className="gs-btn gs-btn-principal" disabled={sujoAgora <= 0 || !!save.personagem.preso} onClick={lavar}>
+            Lavar
+          </button>
+        </div>
+      )}
     </div>
   );
 }

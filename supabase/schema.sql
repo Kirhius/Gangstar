@@ -21,6 +21,9 @@ create table if not exists public.gs_jogadores (
   atualizado_em timestamptz not null default now()
 );
 
+-- v1.3: dinheiro sujo (o PvP leva o sujo primeiro)
+alter table public.gs_jogadores add column if not exists dinheiro_sujo bigint not null default 0;
+
 -- Save completo (privado: so o dono le e escreve)
 create table if not exists public.gs_saves (
   id uuid primary key references auth.users (id) on delete cascade,

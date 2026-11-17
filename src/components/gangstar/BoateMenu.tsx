@@ -18,6 +18,7 @@ import {
   itensSecaoBoate,
   precoNaBoate,
   type SecaoBoate,
+  saldoAceitandoSujo,
 } from "@/lib/gangstar";
 import type { ItemDef } from "@/lib/gangstarItens";
 import { NotaQualidade } from "./NotaQualidade";
@@ -104,7 +105,7 @@ export function BoateMenu({
                 </div>
                 <button
                   className="gs-btn-mini gs-btn-boate"
-                  disabled={!!p.preso || p.dinheiro < preco}
+                  disabled={!!p.preso || saldoAceitandoSujo(p) < preco}
                   onClick={() => rodar(consumirItemBoate(save, item.id), `${item.emoji} ${item.nome}: ${efeitos(item)}`)}
                 >
                   {verbo(item)}
@@ -153,7 +154,7 @@ export function BoateMenu({
                     {g.descricao} {efeitos(g)}
                   </span>
                 </div>
-                <button className="gs-btn-mini gs-btn-boate" disabled={!!p.preso || p.dinheiro < custo} onClick={() => rodar(contratarGarota(save, g.id, propria), `${g.emoji} ${g.nome}: ${efeitos(g)}`)}>
+                <button className="gs-btn-mini gs-btn-boate" disabled={!!p.preso || saldoAceitandoSujo(p) < custo} onClick={() => rodar(contratarGarota(save, g.id, propria), `${g.emoji} ${g.nome}: ${efeitos(g)}`)}>
                   Contratar
                   <small>{formatarDinheiro(custo)}</small>
                 </button>

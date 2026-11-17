@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     .from("gs_jogadores")
     .update({
       energia: Math.max(0, atacante.energia + r.efeitoAtacante.energia),
-      dinheiro: atacante.dinheiro + r.efeitoAtacante.dinheiro,
+      dinheiro_sujo: Math.max(0, (atacante.dinheiro_sujo ?? 0) + r.efeitoAtacante.sujo),
       atualizado_em: agora,
     })
     .eq("id", atacanteId);
@@ -99,6 +99,7 @@ export async function POST(request: Request) {
     .from("gs_jogadores")
     .update({
       dinheiro: Math.max(0, defensor.dinheiro + r.efeitoDefensor.dinheiro),
+      dinheiro_sujo: Math.max(0, (defensor.dinheiro_sujo ?? 0) + r.efeitoDefensor.sujo),
       protegido_ate: r.venceu ? new Date(Date.now() + PROTECAO_APOS_PERDER_H * 3600000).toISOString() : defensor.protegido_ate,
       atualizado_em: agora,
     })

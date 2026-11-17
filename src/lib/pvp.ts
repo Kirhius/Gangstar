@@ -16,6 +16,7 @@ export interface ResumoJogador {
   respeito: number;
   poder: number;
   dinheiro: number;
+  dinheiro_sujo?: number;
   energia: number;
   vida: number;
   protegido_ate: string | null;
@@ -23,7 +24,8 @@ export interface ResumoJogador {
 
 // o que muda no save de cada lado (aplicado pelo aparelho de cada um)
 export interface EfeitoPvp {
-  dinheiro: number;
+  dinheiro: number; // limpo
+  sujo: number;
   respeito: number;
   vida: number;
   energia: number;
@@ -44,18 +46,21 @@ export function resolverAtaque(
   const chance = chancePvp(atacante.poder, defensor.poder);
   const venceu = sorteio < chance;
   if (venceu) {
-    const roubo = Math.min(TETO_ROUBO_PVP, Math.max(0, Math.round(defensor.dinheiro * 0.12)));
+    // o dinheiro sujo vai primeiro (20%); sem sujo, leva 12% do limpo. O atacante recebe tudo como sujo.
+    const sujoDef = Math.max(0, defensor.dinheiro_sujo ?? 0);
+    const doSujo = Math.min(TETO_ROUBO_PVP, Math.round(sujoDef * 0.2));
+    const doLimpo = doSujo > 0 ? 0 : Math.min(TETO_ROUBO_PVP, Math.max(0, Math.round(defensor.dinheiro * 0.12)));
     return {
       venceu,
       chance,
-      efeitoAtacante: { dinheiro: roubo, respeito: 20, vida: -5, energia: -ENERGIA_PVP, xp: 40 },
-      efeitoDefensor: { dinheiro: -roubo, respeito: -15, vida: -10, energia: 0, xp: 0 },
+      efeitoAtacante: { dinheiro: 0, sujo: doSujo + doLimpo, respeito: 20, vida: -5, energia: -ENERGIA_PVP, xp: 40 },
+      efeitoDefensor: { dinheiro: -doLimpo, sujo: -doSujo, respeito: -15, vida: -10, energia: 0, xp: 0 },
     };
   }
   return {
     venceu,
     chance,
-    efeitoAtacante: { dinheiro: 0, respeito: -10, vida: -15, energia: -ENERGIA_PVP, xp: 10 },
-    efeitoDefensor: { dinheiro: 0, respeito: 10, vida: 0, energia: 0, xp: 15 },
+    efeitoAtacante: { dinheiro: 0, sujo: 0, respeito: -10, vida: -15, energia: -ENERGIA_PVP, xp: 10 },
+    efeitoDefensor: { dinheiro: 0, sujo: 0, respeito: 10, vida: 0, energia: 0, xp: 15 },
   };
 }

@@ -19,6 +19,7 @@ import {
   type ClasseBandido,
   NIVEL_MAX_BANDIDO,
   xpParaProximoNivelBandido,
+  saldoAceitandoSujo,
 } from "@/lib/gangstar";
 
 function formatarDinheiro(v: number): string {
@@ -119,7 +120,7 @@ export function Recrutamento({ save, aoAtualizar, aoVoltar }: { save: GangstarSa
               )}
             </div>
             <div className="gs-botoes-coluna">
-              <button className="gs-btn-mini" disabled={b.lealdade >= 100 || save.personagem.dinheiro < custoBonusLealdade(b)} onClick={() => rodar(pagarBonusBandido(save, b.id), `💵 ${b.nome} ficou mais leal.`)}>
+              <button className="gs-btn-mini" disabled={b.lealdade >= 100 || saldoAceitandoSujo(save.personagem) < custoBonusLealdade(b)} onClick={() => rodar(pagarBonusBandido(save, b.id), `💵 ${b.nome} ficou mais leal.`)}>
                 Bônus {formatarDinheiro(custoBonusLealdade(b))}
               </button>
               <button className="gs-btn-mini gs-btn-mini-perigo" onClick={() => rodar({ save: dispensarBandido(save, b.id) }, `${b.nome} foi dispensado.`)}>
@@ -145,7 +146,7 @@ export function Recrutamento({ save, aoAtualizar, aoVoltar }: { save: GangstarSa
                 {c.comissao > 0 && ` · comissão ${Math.round(c.comissao * 100)}%`}
               </span>
             </div>
-            <button className="gs-btn-mini" disabled={lotado || save.personagem.dinheiro < c.custo} onClick={() => rodar(contratarBandido(save, c), `🤝 ${c.nome} entrou para a gangue!`)}>
+            <button className="gs-btn-mini" disabled={lotado || saldoAceitandoSujo(save.personagem) < c.custo} onClick={() => rodar(contratarBandido(save, c), `🤝 ${c.nome} entrou para a gangue!`)}>
               {lotado ? "Lotado" : formatarDinheiro(c.custo)}
             </button>
           </div>

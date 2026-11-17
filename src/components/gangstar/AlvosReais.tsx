@@ -51,6 +51,7 @@ export function AlvosReais({
       titulo: a.venceu ? `💥 Você venceu ${nome}!` : `🛡️ ${nome} se defendeu!`,
       linhas: [
         ...(e.dinheiro ? [`💰 +${formatarDinheiro(e.dinheiro)}`] : []),
+        ...(e.sujo ? [`🩸 +${formatarDinheiro(e.sujo)} (sujo)`] : []),
         `⭐ ${e.respeito > 0 ? "+" : ""}${e.respeito} respeito`,
         `❤️ ${e.vida} vida · ⚡ ${e.energia} energia`,
         ...(e.xp ? [`✨ +${e.xp} XP`] : []),
@@ -64,7 +65,7 @@ export function AlvosReais({
     <div className="gs-alvos-reais">
       <h3 className="gs-h3">⚔️ Jogadores reais</h3>
       <p className="gs-p-intro">
-        Ataque outros jogadores (nível {NIVEL_PVP}+). Custa ⚡{ENERGIA_PVP}. Vencendo, você leva 12% do dinheiro em mãos dele. O mesmo alvo só a cada {RECARGA_MESMO_ALVO_H}h.
+        Ataque outros jogadores (nível {NIVEL_PVP}+). Custa ⚡{ENERGIA_PVP}. Vencendo, você leva 20% do dinheiro sujo dele (ou 12% do limpo, se ele não tiver sujo), tudo como dinheiro sujo. O mesmo alvo só a cada {RECARGA_MESMO_ALVO_H}h.
       </p>
       {msg && <div className="gs-aviso">{msg}</div>}
       {alvos.length === 0 ? (

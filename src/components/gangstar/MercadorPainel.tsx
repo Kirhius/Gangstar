@@ -4,7 +4,7 @@
 // Vende itens 25% abaixo do valor e compra os seus 30% acima.
 
 import { useState } from "react";
-import { GangstarSave, comprarDoMercador, mercadorAtual, ofertasMercador, parseChave, precoVendaMercador, venderAoMercador } from "@/lib/gangstar";
+import { GangstarSave, comprarDoMercador, mercadorAtual, ofertasMercador, parseChave, precoVendaMercador, venderAoMercador, saldoAceitandoSujo } from "@/lib/gangstar";
 import { itemPorId, type ItemDef } from "@/lib/gangstarItens";
 import { NotaQualidade } from "./NotaQualidade";
 
@@ -66,7 +66,7 @@ export function MercadorPainel({ save, aoAtualizar, aoFechar }: { save: Gangstar
                         <s>{formatarDinheiro(o.item.valor)}</s> · estoque {o.estoque}
                       </span>
                     </div>
-                    <button className="gs-btn-mini" disabled={o.estoque <= 0 || save.personagem.dinheiro < o.preco} onClick={() => rodar(comprarDoMercador(save, o.item.id), `${o.item.emoji} Comprou ${o.item.nome}.`)}>
+                    <button className="gs-btn-mini" disabled={o.estoque <= 0 || saldoAceitandoSujo(save.personagem) < o.preco} onClick={() => rodar(comprarDoMercador(save, o.item.id), `${o.item.emoji} Comprou ${o.item.nome}.`)}>
                       {o.estoque <= 0 ? "Esgotado" : formatarDinheiro(o.preco)}
                     </button>
                   </div>

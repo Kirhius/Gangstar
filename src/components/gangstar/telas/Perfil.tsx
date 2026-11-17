@@ -88,8 +88,16 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
           <small>{colete ? `+${Math.round((colete.poder ?? 0) * 0.6)} poder · menos dano` : "vazio"}</small>
         </button>
         <button
-          className={`gs-slot-equip ${especial ? "gs-slot-cheio" : ""}`}
-          style={especial?.raridade ? { borderColor: RARIDADES[especial.raridade].cor, boxShadow: `0 0 10px ${RARIDADES[especial.raridade].cor}66` } : undefined}
+          className={`gs-slot-equip ${especial ? "gs-slot-cheio gs-slot-especial-cheio" : "gs-slot-especial-vazio"}`}
+          style={
+            especial?.raridade
+              ? {
+                  borderColor: RARIDADES[especial.raridade].cor,
+                  background: `linear-gradient(160deg, ${RARIDADES[especial.raridade].cor}33, #150a24 75%)`,
+                  boxShadow: `0 0 12px ${RARIDADES[especial.raridade].cor}88, inset 0 0 12px ${RARIDADES[especial.raridade].cor}33`,
+                }
+              : undefined
+          }
           onClick={() => setEscolhendo(escolhendo === "especial" ? null : "especial")}
         >
           <span className="gs-slot-emoji">{especial?.emoji ?? "💎"}</span>
@@ -182,10 +190,17 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
 
       <div className="gs-lista">
         <div className="gs-card">
-          <span className="gs-card-emoji">💰</span>
+          <span className="gs-card-emoji">💵</span>
           <div className="gs-card-corpo">
             <strong>R$ {p.dinheiro.toLocaleString("pt-BR")}</strong>
-            <span className="gs-card-sub">Dinheiro</span>
+            <span className="gs-card-sub">Dinheiro limpo</span>
+          </div>
+        </div>
+        <div className="gs-card">
+          <span className="gs-card-emoji">🩸</span>
+          <div className="gs-card-corpo">
+            <strong>R$ {(p.dinheiroSujo ?? 0).toLocaleString("pt-BR")}</strong>
+            <span className="gs-card-sub">Dinheiro sujo (lave nas fachadas)</span>
           </div>
         </div>
         <div className="gs-card">

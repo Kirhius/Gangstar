@@ -7,7 +7,7 @@
 
 export type CategoriaItem = "arma" | "colete" | "bebida" | "droga" | "medicamento" | "especial";
 export type Raridade = "comum" | "raro" | "epico" | "lendario";
-export type TipoBonusEspecial = "poder" | "respeito" | "prisao" | "extorsao" | "emboscada";
+export type TipoBonusEspecial = "poder" | "respeito" | "prisao" | "extorsao" | "emboscada" | "lavagem";
 export type FabricaItem = "fabrica-armas" | "fabrica-bebidas" | "fabrica-drogas" | "fabrica-medicamentos";
 
 export interface ItemDef {
@@ -98,6 +98,7 @@ export const ITENS_RAROS: ItemDef[] = [
   { id: "r-relogio-ouro", nome: "Relógio de ouro", emoji: "⌚", categoria: "especial", nivel: 1, valor: 25000, raridade: "epico", bonus: { tipo: "respeito", valor: 0.12 }, descricao: "+12% de respeito nos roubos" },
   { id: "r-celular-cripto", nome: "Celular criptografado", emoji: "📵", categoria: "especial", nivel: 1, valor: 25000, raridade: "epico", bonus: { tipo: "emboscada", valor: 0.15 }, descricao: "+15% de poder nas emboscadas e contra o capo" },
   { id: "r-anel-padrinho", nome: "Anel do Padrinho", emoji: "💍", categoria: "especial", nivel: 1, valor: 80000, raridade: "lendario", bonus: { tipo: "poder", valor: 0.15 }, descricao: "+15% de poder" },
+  { id: "r-livro-caixa", nome: "Livro-caixa duplo", emoji: "📒", categoria: "especial", nivel: 1, valor: 25000, raridade: "epico", bonus: { tipo: "lavagem", valor: 0.3 }, descricao: "−30% de suspeita ao lavar dinheiro" },
   { id: "r-amuleto-jorge", nome: "Amuleto de São Jorge", emoji: "🧿", categoria: "especial", nivel: 1, valor: 80000, raridade: "lendario", bonus: { tipo: "prisao", valor: 0.3 }, descricao: "−30% de chance de prisão" },
 ];
 

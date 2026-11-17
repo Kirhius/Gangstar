@@ -14,6 +14,9 @@ import {
   eventosDaSemana,
   gangstar,
   liberacoesDoNivel,
+  poderEmboscada,
+  sujo,
+  suspeitaAtual,
   marcarTemporadaVista,
   nomeDoMes,
   tituloAtual,
@@ -31,6 +34,7 @@ import { Extorsoes } from "./telas/Extorsoes";
 import { Inventario } from "./telas/Inventario";
 import { Missoes } from "./telas/Missoes";
 import { useConta } from "./conta";
+import { PopupInfoTopo, nivelAlerta, type InfoTopo } from "./PopupInfoTopo";
 import { agendarSync, aplicarAtaque, assinarAtaquesRecebidos, ataquesPendentes, atualizarJogadores, type AtaqueRegistro } from "@/lib/multiplayer";
 import { gravarNav, lerNav } from "./navegacao";
 
@@ -59,6 +63,7 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
     setAbaBruta(a);
   };
   const [verEventos, setVerEventos] = useState(false);
+  const [info, setInfo] = useState<InfoTopo | null>(null);
   // pop-up de "subiu de nivel": guarda o nivel anterior e mostra as liberacoes novas
   const nivelAnterior = useRef<number | null>(null);
   const [subiu, setSubiu] = useState<{ de: number; para: number } | null>(null);
@@ -172,28 +177,39 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
           </button>
         </div>
         <div className="gs-stats-topo">
-          <div className="gs-stat-chip gs-stat-chip-dinheiro" title="Dinheiro em mãos">
-            💰
+          {/* linha 1: dinheiro limpo, energia, vida, respeito */}
+          <button className="gs-stat-chip gs-stat-chip-dinheiro" onClick={() => setInfo("limpo")}>
+            💵
             <strong className={save.personagem.dinheiro < 0 ? "gs-negativo" : ""}>
               R$ {save.personagem.dinheiro.toLocaleString("pt-BR", { minimumFractionDigits: save.personagem.dinheiro < 0 ? 2 : 0 })}
             </strong>
-          </div>
-          <div className="gs-stat-chip gs-stat-chip-energia" title="Energia">
+          </button>
+          <button className="gs-stat-chip gs-stat-chip-energia" onClick={() => setInfo("energia")}>
             ⚡<strong>
               {save.personagem.energia}/{save.personagem.energiaMax}
             </strong>
-          </div>
-          <div className="gs-stat-chip gs-stat-chip-vida" title="Vida">
+          </button>
+          <button className="gs-stat-chip gs-stat-chip-vida" onClick={() => setInfo("vida")}>
             ❤️<strong>
               {save.personagem.vida}/{save.personagem.vidaMax}
             </strong>
-          </div>
-          <div className="gs-stat-chip gs-stat-chip-respeito" title="Respeito">
-            ⭐<strong>{save.personagem.respeito}</strong>
-          </div>
-          <div className="gs-stat-chip gs-stat-chip-vicio" title="Vício">
+          </button>
+          <button className="gs-stat-chip gs-stat-chip-respeito" onClick={() => setInfo("respeito")}>
+            ⭐<strong>{save.personagem.respeito.toLocaleString("pt-BR")}</strong>
+          </button>
+          {/* linha 2: dinheiro sujo, alerta policial, poder total, vicio */}
+          <button className="gs-stat-chip gs-stat-chip-sujo" onClick={() => setInfo("sujo")}>
+            🩸<strong>R$ {sujo(save.personagem).toLocaleString("pt-BR")}</strong>
+          </button>
+          <button className={`gs-stat-chip gs-stat-chip-alerta gs-alerta-${nivelAlerta(suspeitaAtual(save))}`} onClick={() => setInfo("alerta")}>
+            🚨<strong>{Math.round(suspeitaAtual(save))}%</strong>
+          </button>
+          <button className="gs-stat-chip gs-stat-chip-poder" onClick={() => setInfo("poder")}>
+            💪<strong>{Math.round(poderEmboscada(save))}</strong>
+          </button>
+          <button className="gs-stat-chip gs-stat-chip-vicio" onClick={() => setInfo("vicio")}>
             🌀<strong>{save.personagem.vicio}/100</strong>
-          </div>
+          </button>
         </div>
         {save.personagem.preso && (
           <div className={`gs-preso-contagem ${save.personagem.preso.hospital ? "gs-internado" : ""}`} role="status">
@@ -327,6 +343,7 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
               </p>
               <div className="gs-ataque-efeitos">
                 {a.efeito_defensor.dinheiro !== 0 && <span>💰 {a.efeito_defensor.dinheiro < 0 ? "−" : "+"}R$ {Math.abs(a.efeito_defensor.dinheiro).toLocaleString("pt-BR")}</span>}
+                {!!a.efeito_defensor.sujo && <span>🩸 −R$ {Math.abs(a.efeito_defensor.sujo).toLocaleString("pt-BR")} sujo</span>}
                 {a.efeito_defensor.respeito !== 0 && (
                   <span>
                     ⭐ {a.efeito_defensor.respeito > 0 ? "+" : ""}
@@ -336,7 +353,7 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
                 {a.efeito_defensor.vida !== 0 && <span>❤️ {a.efeito_defensor.vida} vida</span>}
                 {a.efeito_defensor.xp > 0 && <span>✨ +{a.efeito_defensor.xp} XP</span>}
               </div>
-              {perdeu && <p className="gs-dica">Você ficou 1 hora protegido contra novos ataques. Guarde dinheiro no banco: só o dinheiro em mãos pode ser levado.</p>}
+              {perdeu && <p className="gs-dica">Você ficou 1 hora protegido contra novos ataques. O dinheiro sujo é levado primeiro: lave nas suas fachadas e guarde o limpo no banco.</p>}
               <button className="gs-btn gs-btn-principal gs-btn-bloco" onClick={() => setAtaquesRecebidos((l) => l.slice(1))}>
                 {perdeu ? "Vou me vingar" : "Boa!"}
               </button>
@@ -344,6 +361,7 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
           </div>
         );
       })()}
+      {info && <PopupInfoTopo tipo={info} save={save} aoFechar={() => setInfo(null)} />}
     </div>
   );
 }

@@ -50,6 +50,8 @@ export interface Personagem {
   armas: string[];
   armaEquipada: string | null;
   vezesPreso: number;
+  // v1.3: dinheiro sujo (roubos, extorsoes, emboscadas...). Precisa ser lavado para virar limpo.
+  dinheiroSujo?: number;
   // preso (ou internado no hospital, com hospital: true): nao pode jogar ate "ate"
   preso: { ate: number; motimFalhou?: boolean; hospital?: boolean } | null;
   banco: { saldo: number };
@@ -62,6 +64,9 @@ export interface PredioInstancia {
   ultimaColeta: number;
   // fabricas: item que esta sendo produzido (id em ITENS) na linha 1
   produto?: string;
+  // lavagem de dinheiro: fila de dinheiro sujo sendo lavado e ate quando a fachada esta fechada
+  lavagem?: { fila: number; ultima: number };
+  fechadoAte?: number;
   // fabricas: linhas de producao extras (2 a 5), liberadas a cada 2 niveis
   linhas?: { produto?: string; ultimaColeta: number }[];
   // lojas: estoque a venda (chave "id@qualidade"), caixa acumulado e ultima simulacao
@@ -99,7 +104,7 @@ export interface ExtorsaoInstancia {
 }
 
 // Bandidos da gangue (contratados no Ponto de Recrutamento, o coreto do mapa)
-export type ClasseBandido = "assaltante" | "piloto" | "contrabandista";
+export type ClasseBandido = "assaltante" | "piloto" | "contrabandista" | "contador";
 
 export interface Bandido {
   id: string;
@@ -158,6 +163,10 @@ export interface GangstarSave {
   trofeus?: Trofeu[];
   // ids dos ataques PvP ja aplicados neste save (para nunca aplicar o mesmo duas vezes)
   pvpAplicados?: string[];
+  // lavagem: suspeita da Policia Federal (0 a 100), advogado e sobra de centavos lavados
+  suspeita?: { valor: number; em: number };
+  advogadoAte?: number;
+  lavagemResto?: number;
   ultimaTemporada?: { mes: string; posicao: number; titulo: string | null; respeito: number; visto: boolean };
   // centavos de juros do banco que ainda nao viraram real (o jogo atualiza a cada 10s)
   jurosResto?: number;
@@ -740,6 +749,7 @@ export const CLASSES_BANDIDO: ClasseBandidoDef[] = [
   { id: "assaltante", nome: "Assaltante", emoji: "🔫", vantagem: "Soma poder nos roubos e nas guerras de gangue.", risco: "Leva comissão de cada roubo e pode morrer nas guerras." },
   { id: "piloto", nome: "Piloto de fuga", emoji: "🏎️", vantagem: "Diminui a chance de você ser preso.", risco: "Pode morrer ou ser preso na fuga quando o roubo dá errado." },
   { id: "contrabandista", nome: "Contrabandista", emoji: "📦", vantagem: "Aumenta o que você coleta dos prédios e extorsões.", risco: "Pode trair a gangue e sumir com parte do seu dinheiro." },
+  { id: "contador", nome: "Contador", emoji: "🧮", vantagem: "Lava dinheiro com taxa menor e menos suspeita da polícia.", risco: "Se a Federal fizer uma batida, pode ser preso junto." },
 ];
 
 export const MAX_BANDIDOS_POR_CLASSE = 5;
@@ -817,10 +827,10 @@ export function contratarBandido(save: GangstarSave, candidato: CandidatoBandido
   if (save.bandidos.filter((b) => b.classe === candidato.classe).length >= MAX_BANDIDOS_POR_CLASSE) {
     return { save, erro: `Limite de ${MAX_BANDIDOS_POR_CLASSE} por classe.` };
   }
-  if (save.personagem.dinheiro < candidato.custo) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(save.personagem) < candidato.custo) return { save, erro: "Dinheiro insuficiente." };
   const novo: Bandido = { id: candidato.id, nome: candidato.nome, classe: candidato.classe, nivel: candidato.nivel, poder: candidato.poder, lealdade: 70, contratadoEm: Date.now() };
   return {
-    save: { ...save, personagem: { ...save.personagem, dinheiro: save.personagem.dinheiro - candidato.custo }, bandidos: [...save.bandidos, novo] },
+    save: { ...save, personagem: { ...pagarComSujo(save.personagem, candidato.custo) }, bandidos: [...save.bandidos, novo] },
   };
 }
 
@@ -837,11 +847,11 @@ export function pagarBonusBandido(save: GangstarSave, id: string): { save: Gangs
   if (!b) return { save, erro: "Bandido não encontrado." };
   if (b.lealdade >= 100) return { save, erro: "A lealdade dele já está no máximo." };
   const custo = custoBonusLealdade(b);
-  if (save.personagem.dinheiro < custo) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(save.personagem) < custo) return { save, erro: "Dinheiro insuficiente." };
   return {
     save: {
       ...save,
-      personagem: { ...save.personagem, dinheiro: save.personagem.dinheiro - custo },
+      personagem: { ...pagarComSujo(save.personagem, custo) },
       bandidos: save.bandidos.map((x) => (x.id === id ? { ...x, lealdade: Math.min(100, x.lealdade + 25) } : x)),
     },
   };
@@ -1199,7 +1209,7 @@ function tentarMissaoEquipeBase(
 
     const bandidosAtualizados = save.bandidos.map((b) => (membroIds.includes(b.id) ? evoluirBandido({ ...b, lealdade: Math.min(100, b.lealdade + 4) }, Math.round(missao.xp / 2)) : b));
 
-    let novoP: Personagem = { ...p, energia: energiaRestante, dinheiro: p.dinheiro + dinheiroJogador, respeito: p.respeito + missao.respeito };
+    let novoP: Personagem = { ...p, energia: energiaRestante, dinheiroSujo: sujo(p) + dinheiroJogador, respeito: p.respeito + missao.respeito };
     novoP = ganharXp(novoP, missao.xp);
     return {
       save: { ...save, personagem: novoP, bandidos: bandidosAtualizados },
@@ -1432,7 +1442,7 @@ export function atualizarComTempo(saveOriginal: GangstarSave): GangstarSave {
 }
 
 function aplicarRegeneracao(saveOriginal: GangstarSave): GangstarSave {
-  const save = verificarTemporada(saveOriginal);
+  const save = processarLavagem(verificarTemporada(saveOriginal));
   const agora = Date.now();
   const decorrido = Math.max(0, agora - save.ultimaAtualizacao);
   const p = { ...save.personagem };
@@ -1868,14 +1878,13 @@ export function comprarArma(save: GangstarSave, armaId: string): { save: Gangsta
   if (!arma) return { save, erro: "Arma não encontrada." };
   if (save.personagem.armas.includes(armaId)) return { save, erro: "Você já tem essa arma." };
   const preco = precoArmaFinal(save, arma);
-  if (save.personagem.dinheiro < preco) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(save.personagem) < preco) return { save, erro: "Dinheiro insuficiente." };
   const jaTemArma = !!save.personagem.armaEquipada;
   return {
     save: {
       ...save,
       personagem: {
-        ...save.personagem,
-        dinheiro: save.personagem.dinheiro - preco,
+        ...pagarComSujo(save.personagem, preco),
         armas: [...save.personagem.armas, armaId],
         armaEquipada: jaTemArma ? save.personagem.armaEquipada : armaId,
       },
@@ -1915,12 +1924,12 @@ export function pagarFianca(save: GangstarSave): { save: GangstarSave; erro?: st
   const p = save.personagem;
   if (!p.preso) return { save, erro: "Você não está preso." };
   if (p.preso.hospital) return { save, erro: "Você está internado no hospital." };
-  const fianca = custoFianca(p);
-  if (p.dinheiro < fianca) return { save, erro: "Dinheiro insuficiente para a fiança." };
+  const fianca = custoFianca(p, save);
+  if (saldoAceitandoSujo(p) < fianca) return { save, erro: "Dinheiro insuficiente para a fiança." };
   return {
     save: {
       ...save,
-      personagem: { ...p, dinheiro: p.dinheiro - fianca, preso: null },
+      personagem: { ...pagarComSujo(p, fianca), preso: null },
     },
   };
 }
@@ -1947,7 +1956,12 @@ function fazerMotimBase(save: GangstarSave): { save: GangstarSave; erro?: string
   };
 }
 
-function custoFianca(p: Personagem): number {
+function custoFianca(p: Personagem, save?: GangstarSave): number {
+  const advogado = save && (save.advogadoAte ?? 0) > Date.now() ? 0.5 : 1;
+  return Math.round(custoFiancaBase(p) * advogado);
+}
+
+function custoFiancaBase(p: Personagem): number {
   // Baseado na ultima prisao: usa o maior fiancaBase dos roubos como referencia de escala,
   // ponderado pelo numero de vezes presa (quanto mais reincidente, mais caro sair).
   const base = 200 + p.nivel * 120;
@@ -1955,7 +1969,7 @@ function custoFianca(p: Personagem): number {
 }
 
 export function custoFiancaAtual(save: GangstarSave): number {
-  return custoFianca(save.personagem);
+  return custoFianca(save.personagem, save);
 }
 
 export type ResultadoRoubo =
@@ -1983,7 +1997,7 @@ function tentarRouboBase(save: GangstarSave, rouboId: string): { save: GangstarS
     );
     const comissao = Math.round(dinheiroGanho * comissaoAssaltantes(save));
     const respeitoGanho = Math.round(roubo.respeito * (1 + bonusEspecial(save, "respeito")));
-    let novoP: Personagem = { ...p, energia: energiaRestante, dinheiro: p.dinheiro + dinheiroGanho - comissao, respeito: p.respeito + respeitoGanho };
+    let novoP: Personagem = { ...p, energia: energiaRestante, dinheiroSujo: sujo(p) + dinheiroGanho - comissao, respeito: p.respeito + respeitoGanho };
     novoP = ganharXp(novoP, roubo.xp);
     const lealdade = ajustarLealdade({ ...save, personagem: novoP }, "assaltante", 2);
     return { save: lealdade, resultado: { tipo: "sucesso", dinheiro: dinheiroGanho - comissao, respeito: respeitoGanho, xp: roubo.xp, comissao } };
@@ -2278,7 +2292,7 @@ function coletarExtorsaoBase(save: GangstarSave, id: string): { save: GangstarSa
     };
   }
   return {
-    save: { ...save, extorsoes, personagem: { ...p, dinheiro: p.dinheiro + valor } },
+    save: { ...save, extorsoes, personagem: { ...p, dinheiroSujo: sujo(p) + valor } },
     resultado: { tipo: "coletou", valor },
   };
 }
@@ -2316,11 +2330,11 @@ function curtirNaBoateBase(save: GangstarSave, opcao: OpcaoBoate = "bebidas"): {
   const custo = custoBoateAtual(save, opcao);
   if (p.energia >= p.energiaMax) return { save, erro: "Sua energia já está cheia." };
   if (p.vicio + def.vicio > VICIO_MAX) return { save, erro: "Você está intoxicado demais. Espere o vício baixar (cai 1 ponto a cada 10 min)." };
-  if (p.dinheiro < custo) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(p) < custo) return { save, erro: "Dinheiro insuficiente." };
   return {
     save: {
       ...save,
-      personagem: { ...p, dinheiro: p.dinheiro - custo, energia: Math.min(p.energiaMax, p.energia + def.energia), vicio: Math.min(VICIO_MAX, p.vicio + def.vicio) },
+      personagem: { ...pagarComSujo(p, custo), energia: Math.min(p.energiaMax, p.energia + def.energia), vicio: Math.min(VICIO_MAX, p.vicio + def.vicio) },
     },
   };
 }
@@ -2654,12 +2668,12 @@ export function comprarDoMercador(save: GangstarSave, itemId: string): { save: G
   if (!visita) return { save, erro: "O Mercador já foi embora." };
   const oferta = ofertasMercador(save, visita).find((o) => o.item.id === itemId);
   if (!oferta || oferta.estoque <= 0) return { save, erro: "Esse item esgotou." };
-  if (save.personagem.dinheiro < oferta.preco) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(save.personagem) < oferta.preco) return { save, erro: "Dinheiro insuficiente." };
   const comprados = save.mercador.visita === visita.id ? save.mercador.comprados : {};
   return {
     save: {
       ...save,
-      personagem: { ...save.personagem, dinheiro: save.personagem.dinheiro - oferta.preco },
+      personagem: { ...pagarComSujo(save.personagem, oferta.preco) },
       inventario: addInventario(save.inventario, chaveItem(itemId, oferta.q), 1),
       mercador: { visita: visita.id, comprados: { ...comprados, [itemId]: (comprados[itemId] ?? 0) + 1 } },
     },
@@ -2675,7 +2689,7 @@ export function venderAoMercador(save: GangstarSave, chave: string, qtd = 1): { 
   if (n <= 0) return { save, erro: "Você não tem esse item." };
   const valor = precoVendaMercador(item, q) * n;
   const semItem = removerItens(save, [{ id: chave, qtd: n }]);
-  return { save: { ...semItem, personagem: { ...semItem.personagem, dinheiro: semItem.personagem.dinheiro + valor } }, valor };
+  return { save: { ...semItem, personagem: { ...semItem.personagem, dinheiroSujo: sujo(semItem.personagem) + valor } }, valor };
 }
 
 // ---------- Porto: contratos de envio (3 itens -> dinheiro) ----------
@@ -2908,7 +2922,7 @@ function emboscarBase(save: GangstarSave, alvoId: string, emGrupo = false): { sa
     const saque = alvo.saque && Math.random() < 0.6 ? itemPorId(alvo.saque) : null;
     const respeito = 4 + Math.round(alvo.poder / 12);
     const xp = 15 + Math.round(alvo.poder / 3);
-    const novoP = ganharXp({ ...p, energia: p.energia - ENERGIA_EMBOSCADA, dinheiro: p.dinheiro + dinheiro, respeito: p.respeito + respeito }, xp);
+    const novoP = ganharXp({ ...p, energia: p.energia - ENERGIA_EMBOSCADA, dinheiroSujo: sujo(p) + dinheiro, respeito: p.respeito + respeito }, xp);
     return {
       save: contar(
         { ...base, personagem: novoP, inventario: saque ? addInventario(base.inventario, chaveItem(saque.id, 1 + Math.floor(Math.random() * 3)), 1) : base.inventario },
@@ -3356,10 +3370,11 @@ export function pegarEmprestimo(save: GangstarSave, valor: number): { save: Gang
 export function pagarAgiota(save: GangstarSave): { save: GangstarSave; erro?: string } {
   if (!save.agiota) return { save, erro: "Você não deve nada." };
   const p = save.personagem;
-  const pago = Math.min(p.dinheiro, save.agiota.divida);
+  // o agiota aceita dinheiro sujo (sai primeiro)
+  const pago = Math.min(saldoAceitandoSujo(p), save.agiota.divida);
   if (pago <= 0) return { save, erro: "Você não tem dinheiro em mãos." };
   const resta = save.agiota.divida - pago;
-  return { save: { ...save, personagem: { ...p, dinheiro: p.dinheiro - pago }, agiota: resta > 0 ? { ...save.agiota, divida: resta } : null } };
+  return { save: { ...save, personagem: pagarComSujo(p, pago), agiota: resta > 0 ? { ...save.agiota, divida: resta } : null } };
 }
 
 function processarAgiota(save: GangstarSave): GangstarSave {
@@ -3426,6 +3441,15 @@ export const CAPITULOS: CapituloHistoria[] = [
       { texto: "Venda 10 itens nas suas lojas", alvo: 10, progresso: (s) => estatistica(s, "itensVendidosLojas") },
     ],
     recompensa: { dinheiro: 12000, xp: 250, respeito: 60 },
+  },
+  {
+    titulo: "Lavanderia",
+    texto: "Dinheiro sujo não compra prédio nem ação. Monte suas fachadas e faça o dinheiro sair limpinho.",
+    objetivos: [
+      { texto: "Lave R$ 100.000", alvo: 100000, progresso: (s) => estatistica(s, "lavado") },
+      { texto: "Tenha a Boate ou um Hotel", alvo: 1, progresso: (s) => (Object.values(s.predios).some((p) => p.tipo === "boate" || p.tipo === "hotel") ? 1 : 0) },
+    ],
+    recompensa: { dinheiro: 15000, xp: 300, respeito: 70 },
   },
   {
     titulo: "Negócios no exterior",
@@ -3584,6 +3608,8 @@ function verificarOverdose(save: GangstarSave, agora = Date.now()): { save: Gang
         ...save,
         personagem: {
           ...p,
+          // v1.3: internacao custa 2% de cada atributo (arredondado para cima)
+          atributos: perderAtributosInternacao(p.atributos),
           dinheiro: p.dinheiro - TAXA_INTERNACAO,
           respeito: Math.max(0, p.respeito - RESPEITO_PERDIDO_INTERNACAO),
           vicio: Math.min(p.vicio, 70),
@@ -3801,7 +3827,7 @@ export function golpearCapo(save: GangstarSave, golpe: GolpeId): { save: Gangsta
     res.saque = capo.saque;
     novo = contar({ ...novo, inventario: addInventario(novo.inventario, chaveItem(capo.saque.id, capo.qualidade), 1) }, "caposDerrotados");
   }
-  const pf = ganharXp({ ...novo.personagem, dinheiro: novo.personagem.dinheiro + res.dinheiro, respeito: novo.personagem.respeito + res.respeito }, res.xp);
+  const pf = ganharXp({ ...novo.personagem, dinheiroSujo: sujo(novo.personagem) + res.dinheiro, respeito: novo.personagem.respeito + res.respeito }, res.xp);
   return { save: { ...novo, personagem: pf }, fim: res };
 }
 
@@ -3977,11 +4003,11 @@ export function consertarItemRaro(save: GangstarSave, id: string): { save: Gangs
   if (qtdItem(save, id) <= 0) return { save, erro: "Você não tem esse item." };
   const custo = custoConserto(save, id);
   if (custo <= 0) return { save, erro: "Esse item está inteiro." };
-  if (save.personagem.dinheiro < custo) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(save.personagem) < custo) return { save, erro: "Dinheiro insuficiente." };
   return {
     save: {
       ...save,
-      personagem: { ...save.personagem, dinheiro: save.personagem.dinheiro - custo },
+      personagem: { ...pagarComSujo(save.personagem, custo) },
       equipamento: { ...save.equipamento, durabilidade: { ...(save.equipamento.durabilidade ?? {}), [id]: durabilidadeMax(item) } },
     },
   };
@@ -4116,12 +4142,12 @@ export function consumirItemBoate(save: GangstarSave, itemId: string): { save: G
   const item = itemPorId(itemId);
   if (!item || !ehConsumivel(item)) return { save, erro: "Produto inválido." };
   const preco = precoNaBoate(save, item);
-  if (save.personagem.dinheiro < preco) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(save.personagem) < preco) return { save, erro: "Dinheiro insuficiente." };
   const chave = chaveItem(item.id, 1);
   const tmp: GangstarSave = { ...save, inventario: addInventario(save.inventario, chave, 1) };
   const r = usarItem(tmp, chave);
   if (r.erro) return { save, erro: r.erro };
-  return { ...r, save: { ...r.save, personagem: { ...r.save.personagem, dinheiro: r.save.personagem.dinheiro - preco } } };
+  return { ...r, save: { ...r.save, personagem: { ...pagarComSujo(r.save.personagem, preco) } } };
 }
 
 export function contratarGarota(save: GangstarSave, garotaId: string, naPropriaBoate = false): { save: GangstarSave; erro?: string; overdose?: boolean } {
@@ -4132,12 +4158,11 @@ export function contratarGarota(save: GangstarSave, garotaId: string, naPropriaB
   const custo = custoGarota(save, g, naPropriaBoate);
   if (p.energia >= p.energiaMax && p.vida >= p.vidaMax) return { save, erro: "Sua energia e sua vida já estão cheias." };
   if (p.vicio + g.vicio > VICIO_MAX) return { save, erro: "Você está intoxicado demais." };
-  if (p.dinheiro < custo) return { save, erro: "Dinheiro insuficiente." };
+  if (saldoAceitandoSujo(p) < custo) return { save, erro: "Dinheiro insuficiente." };
   const novo: GangstarSave = {
     ...save,
     personagem: {
-      ...p,
-      dinheiro: p.dinheiro - custo,
+      ...pagarComSujo(p, custo),
       energia: Math.min(p.energiaMax, p.energia + g.energia),
       vida: Math.min(p.vidaMax, p.vida + g.vida),
       vicio: Math.min(VICIO_MAX, p.vicio + g.vicio),
@@ -4433,6 +4458,7 @@ export function tituloAtual(save: GangstarSave): Trofeu | null {
 
 export interface EfeitoPvpSave {
   dinheiro: number;
+  sujo?: number;
   respeito: number;
   vida: number;
   energia: number;
@@ -4444,9 +4470,11 @@ export function aplicarEfeitoPvp(save: GangstarSave, ataqueId: string, e: Efeito
   const p = save.personagem;
   // perda de dinheiro nunca deixa o saldo abaixo de zero por causa do ataque
   const dinheiro = e.dinheiro < 0 ? Math.max(Math.min(p.dinheiro, 0), p.dinheiro + e.dinheiro) : p.dinheiro + e.dinheiro;
+  const dinheiroSujo = Math.max(0, sujo(p) + (e.sujo ?? 0));
   let np: Personagem = {
     ...p,
     dinheiro,
+    dinheiroSujo,
     respeito: Math.max(0, p.respeito + e.respeito),
     vida: Math.max(1, Math.min(p.vidaMax, p.vida + e.vida)),
     energia: Math.max(0, Math.min(p.energiaMax, p.energia + e.energia)),
@@ -4466,8 +4494,227 @@ export function resumoPublico(save: GangstarSave) {
     patrimonio: Math.round(patrimonio(save)),
     poder: Math.round(poderEmboscada(save) * 10) / 10,
     dinheiro: Math.round(p.dinheiro),
+    dinheiro_sujo: Math.round(sujo(p)),
     energia: Math.round(p.energia),
     vida: Math.round(p.vida),
     temporada: save.temporada?.mes ?? mesDaTemporada(),
   };
+}
+
+
+// =====================================================================
+// v1.3: Dinheiro sujo e lavagem. Roubos, extorsoes, emboscadas, capo, PvP e Mercador
+// pagam em dinheiro SUJO. Banco, Bolsa, predios, escola e academia so aceitam LIMPO.
+// Para limpar, coloque o sujo na fila de uma fachada (boate, hotel ou lojas), que lava
+// aos poucos cobrando uma taxa. Lavar muito de uma vez levanta a suspeita da Federal.
+// =====================================================================
+
+export function sujo(p: Personagem): number {
+  return Math.max(0, p.dinheiroSujo ?? 0);
+}
+
+// saldo para pagamentos que aceitam dinheiro sujo (o sujo sai primeiro)
+export function saldoAceitandoSujo(p: Personagem): number {
+  return Math.max(0, p.dinheiro) + sujo(p);
+}
+
+export function pagarComSujo(p: Personagem, valor: number): Personagem {
+  const s = sujo(p);
+  const doSujo = Math.min(s, valor);
+  return { ...p, dinheiroSujo: s - doSujo, dinheiro: p.dinheiro - (valor - doSujo) };
+}
+
+// ---------- Fachadas ----------
+
+export const FACHADAS: Record<string, { porHora: number; taxa: number }> = {
+  boate: { porHora: 2000, taxa: 0.15 },
+  hotel: { porHora: 3000, taxa: 0.1 },
+  "loja-bebidas": { porHora: 1000, taxa: 0.2 },
+  "loja-farmacia": { porHora: 1000, taxa: 0.2 },
+  "loja-armas": { porHora: 1000, taxa: 0.2 },
+};
+
+export function ehFachada(tipo: string): boolean {
+  return tipo in FACHADAS;
+}
+
+export function contadores(save: GangstarSave): Bandido[] {
+  return (save.bandidos ?? []).filter((b) => b.classe === "contador");
+}
+
+// cada contador tira 1 ponto da taxa (+ 0,3 por nivel), ate -8 pontos no total
+export function descontoTaxaContadores(save: GangstarSave): number {
+  return Math.min(0.08, contadores(save).reduce((a, b) => a + 0.01 + b.nivel * 0.003, 0));
+}
+
+export function taxaLavagem(save: GangstarSave, tipo: string): number {
+  const base = FACHADAS[tipo]?.taxa ?? 0.2;
+  return Math.max(0.03, base - descontoTaxaContadores(save));
+}
+
+export function capacidadeLavagem(save: GangstarSave, inst: PredioInstancia): number {
+  const f = FACHADAS[inst.tipo];
+  if (!f) return 0;
+  const festa = inst.tipo === "boate" && eventoEstaAtivo(save, "festa-cidade") ? 2 : 1;
+  return f.porHora * inst.nivel * festa;
+}
+
+export function fachadaFechada(inst: PredioInstancia, agora = Date.now()): boolean {
+  return (inst.fechadoAte ?? 0) > agora;
+}
+
+export function totalNaLavagem(save: GangstarSave): number {
+  return Math.round(Object.values(save.predios).reduce((a, i) => a + (i.lavagem?.fila ?? 0), 0));
+}
+
+export function horasParaLavar(save: GangstarSave): number {
+  let max = 0;
+  for (const i of Object.values(save.predios)) {
+    const fila = i.lavagem?.fila ?? 0;
+    const cap = capacidadeLavagem(save, i);
+    if (fila > 0 && cap > 0) max = Math.max(max, fila / cap);
+  }
+  return max;
+}
+
+// ---------- Suspeita da Policia Federal (0 a 100) ----------
+
+export const SUSPEITA_BATIDA = 60;
+export const SUSPEITA_PRISAO = 90;
+
+export function suspeitaAtual(save: GangstarSave, agora = Date.now()): number {
+  const s = save.suspeita;
+  if (!s) return 0;
+  const horas = Math.max(0, (agora - s.em) / 3600000);
+  return Math.max(0, Math.round((s.valor - horas * 2) * 10) / 10);
+}
+
+export function advogadoAtivo(save: GangstarSave, agora = Date.now()): boolean {
+  return (save.advogadoAte ?? 0) > agora;
+}
+
+// quanto a suspeita sobe a cada R$ 5.000 colocados para lavar
+export function fatorSuspeita(save: GangstarSave): number {
+  let f = eventoDiario().id === "operacao-policial" ? 2 : 1;
+  f *= 1 - bonusEspecial(save, "lavagem");
+  f *= 1 - Math.min(0.6, contadores(save).length * 0.15);
+  if (advogadoAtivo(save)) f *= 0.7;
+  return f;
+}
+
+export const CUSTO_ADVOGADO = 20000;
+export const DIAS_ADVOGADO = 7;
+
+export function contratarAdvogado(save: GangstarSave): { save: GangstarSave; erro?: string } {
+  const p = save.personagem;
+  if (p.preso) return { save, erro: msgBloqueado(p) };
+  if (p.dinheiro < CUSTO_ADVOGADO) return { save, erro: "O advogado só aceita dinheiro limpo." };
+  const base = Math.max(Date.now(), save.advogadoAte ?? 0);
+  return { save: { ...save, personagem: { ...p, dinheiro: p.dinheiro - CUSTO_ADVOGADO }, advogadoAte: base + DIAS_ADVOGADO * 86400000 } };
+}
+
+// ---------- Lavar ----------
+
+export type ResultadoLavagem = {
+  save: GangstarSave;
+  erro?: string;
+  valor?: number;
+  batida?: { perdeu: number; preso: boolean; contadoresPresos: string[] };
+};
+
+// valor null = tudo o dinheiro sujo
+export function lavarDinheiro(save: GangstarSave, predioId: string, valor: number | null): ResultadoLavagem {
+  const inst = save.predios[predioId];
+  const p = save.personagem;
+  if (!inst || !ehFachada(inst.tipo)) return { save, erro: "Esse prédio não serve de fachada." };
+  if (p.preso) return { save, erro: msgBloqueado(p) };
+  if (fachadaFechada(inst)) return { save, erro: "A Federal lacrou essa fachada. Espere reabrir." };
+  const v = valor === null ? sujo(p) : Math.floor(valor);
+  if (v <= 0) return { save, erro: "Você não tem dinheiro sujo." };
+  if (v > sujo(p)) return { save, erro: "Você não tem tanto dinheiro sujo." };
+
+  const agora = Date.now();
+  const antes = suspeitaAtual(save, agora);
+  const depois = Math.min(100, antes + (v / 5000) * fatorSuspeita(save));
+  const fila = (inst.lavagem?.fila ?? 0) + v;
+  let novo: GangstarSave = {
+    ...save,
+    personagem: { ...p, dinheiroSujo: sujo(p) - v },
+    predios: { ...save.predios, [predioId]: { ...inst, lavagem: { fila, ultima: inst.lavagem?.fila ? inst.lavagem.ultima : agora } } },
+    suspeita: { valor: depois, em: agora },
+  };
+
+  // batida fiscal: acima de 60 de suspeita
+  if (depois > SUSPEITA_BATIDA && Math.random() < Math.min(0.4, (depois - SUSPEITA_BATIDA) / 100 + 0.05)) {
+    const pct = 0.2 + Math.random() * 0.2;
+    const np = novo.personagem;
+    const perdaSujo = Math.round(sujo(np) * pct);
+    const perdaFila = Math.round(fila * pct);
+    let pessoa: Personagem = { ...np, dinheiroSujo: sujo(np) - perdaSujo };
+    let preso = false;
+    if (depois > SUSPEITA_PRISAO && Math.random() < 0.35) {
+      preso = true;
+      pessoa = { ...pessoa, preso: { ate: agora + 30 * 60000 }, vezesPreso: pessoa.vezesPreso + 1, respeito: Math.max(0, pessoa.respeito - RESPEITO_PERDIDO_PRISAO) };
+    }
+    // contadores podem ir presos junto (saem da gangue)
+    const presos = contadores(novo).filter(() => Math.random() < 0.25);
+    novo = {
+      ...novo,
+      personagem: pessoa,
+      bandidos: novo.bandidos.filter((b) => !presos.includes(b)),
+      predios: { ...novo.predios, [predioId]: { ...novo.predios[predioId], lavagem: { fila: fila - perdaFila, ultima: agora }, fechadoAte: agora + 2 * 3600000 } },
+      suspeita: { valor: Math.max(0, depois - 30), em: agora },
+    };
+    novo = contar(novo, "batidasFiscais");
+    return { save: novo, valor: v, batida: { perdeu: perdaSujo + perdaFila, preso, contadoresPresos: presos.map((b) => b.nome) } };
+  }
+  return { save: novo, valor: v };
+}
+
+// roda no relogio: cada fachada lava a sua fila conforme a capacidade (sem perder centavos)
+function processarLavagem(save: GangstarSave, agora = Date.now()): GangstarSave {
+  let limpoGanho = save.lavagemResto ?? 0;
+  let lavadoTotal = 0;
+  let mudou = false;
+  const predios = { ...save.predios };
+  for (const [id, inst] of Object.entries(predios)) {
+    const l = inst.lavagem;
+    if (!l || l.fila <= 0) continue;
+    const desde = Math.max(l.ultima, inst.fechadoAte ?? 0);
+    if (agora <= desde) continue;
+    const cap = capacidadeLavagem(save, inst);
+    const lavado = Math.min(l.fila, (cap * (agora - desde)) / 3600000);
+    if (lavado <= 0) continue;
+    mudou = true;
+    lavadoTotal += lavado;
+    limpoGanho += lavado * (1 - taxaLavagem(save, inst.tipo));
+    const resta = l.fila - lavado;
+    predios[id] = { ...inst, lavagem: resta > 0.01 ? { fila: resta, ultima: agora } : undefined };
+  }
+  if (!mudou) return save;
+  const inteiro = Math.floor(limpoGanho);
+  const s1: GangstarSave = {
+    ...save,
+    predios,
+    personagem: { ...save.personagem, dinheiro: save.personagem.dinheiro + inteiro },
+    lavagemResto: limpoGanho - inteiro,
+  };
+  return contar(s1, "lavado", Math.round(lavadoTotal));
+}
+
+// ---------- Conquistas da lavagem ----------
+
+CONQUISTAS.push(
+  { id: "contador-de-ouro", nome: "Contador de ouro", emoji: "🧾", descricao: "Lave R$ 1.000.000.", feito: (s) => estatistica(s, "lavado") >= 1000000, recompensa: 8000 },
+  { id: "ficha-limpa", nome: "Ficha limpa", emoji: "🧼", descricao: "Lave R$ 200.000 sem nenhuma batida fiscal.", feito: (s) => estatistica(s, "lavado") >= 200000 && estatistica(s, "batidasFiscais") === 0, recompensa: 5000 },
+);
+
+export const PERDA_ATRIBUTOS_INTERNACAO = 0.02;
+
+function perderAtributosInternacao(a: Personagem["atributos"]): Personagem["atributos"] {
+  const novo = { ...a };
+  for (const k of ["forca", "resistencia", "carisma", "inteligencia"] as const) {
+    if (typeof novo[k] === "number") novo[k] = Math.max(1, novo[k] - Math.ceil(novo[k] * PERDA_ATRIBUTOS_INTERNACAO));
+  }
+  return novo;
 }

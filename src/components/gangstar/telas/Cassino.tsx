@@ -24,6 +24,7 @@ import {
   rivaisTorneio,
   torneioDeHoje,
   type GangstarSave,
+  saldoAceitandoSujo,
 } from "@/lib/gangstar";
 import {
   SIMBOLOS_SLOT,
@@ -115,7 +116,7 @@ export function Cassino({ save, aoAtualizar, aoVoltar }: { save: GangstarSave; a
               Vence em {Math.max(0, Math.floor((agiota.venceEm - Date.now()) / 3600000))}h — se não pagar, ele cobra do bolso, do banco e na porrada.
             </span>
           </div>
-          <button className="gs-btn-mini" disabled={dinheiro <= 0} onClick={() => aplicar((s) => pagarAgiota(s).save)}>
+          <button className="gs-btn-mini" disabled={saldoAceitandoSujo(save.personagem) <= 0} onClick={() => aplicar((s) => pagarAgiota(s).save)}>
             Pagar
           </button>
         </div>
