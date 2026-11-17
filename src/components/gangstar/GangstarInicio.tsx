@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { CLASSES, ClasseId, gangstar } from "@/lib/gangstar";
 import { GangstarApp } from "./GangstarApp";
+import { BotaoInstalar } from "./BotaoInstalar";
 import { gravarNav, lerNav } from "./navegacao";
 import { Icone } from "../Icone";
 
@@ -63,6 +64,7 @@ export function GangstarInicio({ aoVoltar }: { aoVoltar?: () => void }) {
           </div>
 
           {temSalvo && <small className="gs-dica">Começar um novo jogo apaga o império salvo neste aparelho.</small>}
+          <BotaoInstalar />
         </div>
       )}
 

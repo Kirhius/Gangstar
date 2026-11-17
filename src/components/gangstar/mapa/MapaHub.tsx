@@ -6,6 +6,7 @@
 // v4.58: etiquetas de nome (botao de olho) e o botao do Mercador quando ele aparece.
 
 import { useState, type ReactNode } from "react";
+import { CamadaPeriodo } from "./periodo";
 import { BotaoOlho, TagsMapa } from "./TagsMapa";
 
 export type LocalHub = "hospital" | "banco" | "academia" | "escola" | "policia" | "mercado" | "boates" | "bolsa";
@@ -38,6 +39,7 @@ export function MapaHub({ onLocal, extra }: { onLocal: (local: LocalHub) => void
       {extra}
       <svg viewBox={`0 0 ${W} ${H}`} className="gs-mapa-svg" role="img" aria-label="Mapa do centro da cidade">
         <image href="/gangstar/hub/cidade-hub.webp" x={0} y={0} width={W} height={H} />
+        <CamadaPeriodo w={W} h={H} />
         {ALVOS.map((a) => (
           <polygon
             key={a.id}

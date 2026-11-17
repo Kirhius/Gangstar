@@ -203,6 +203,23 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
       </div>
 
       <p className="gs-dica">💡 {classe.descricao}</p>
+      <h3 className="gs-h3">🏆 Sala de troféus</h3>
+      {(save.trofeus ?? []).length === 0 ? (
+        <p className="gs-dica">Nenhum troféu ainda. Termine uma temporada mensal no top 3 do ranking de gangues para ganhar um título permanente.</p>
+      ) : (
+        <div className="gs-trofeus">
+          {[...(save.trofeus ?? [])].reverse().map((t) => (
+            <div key={t.mes} className={`gs-trofeu gs-trofeu-${t.posicao}`}>
+              <span>{t.titulo.split(" ")[0]}</span>
+              <strong>{t.titulo.split(" ").slice(1).join(" ")}</strong>
+              <small>
+                {t.posicao}º lugar · {t.respeito.toLocaleString("pt-BR")} de respeito
+              </small>
+            </div>
+          ))}
+        </div>
+      )}
+
       <h3 className="gs-h3">Prestígio {save.prestigio > 0 && `(nível ${save.prestigio})`}</h3>
       <p className="gs-p-intro">
         Reinicie seu progresso (dinheiro, prédios e bandidos) em troca de um bônus permanente de +2% em todo dinheiro ganho, por nível.

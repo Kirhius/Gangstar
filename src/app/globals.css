@@ -539,3 +539,38 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-subiu-lista p { margin: 0; padding: 8px 10px; border-radius: 8px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 13px; line-height: 1.4; color: #e9dcff; }
 .gs-subiu-lista small { display: block; margin: 4px 0 0; font-size: 10px; color: #ffb020; font-family: "Press Start 2P", monospace; }
 
+
+/* ---------- v1.1: tela de carregamento, instalar app, temporada, dia e noite ---------- */
+.gs-splash { position: relative; max-width: var(--largura); min-height: 100dvh; margin: 0 auto; overflow: hidden; background: #0c0617; color: #f4e9ff; display: flex; flex-direction: column; }
+.gs-splash-capa { flex: 0 0 auto; width: 100%; aspect-ratio: 1584 / 672; background: linear-gradient(0deg, #0c0617 0%, rgba(12, 6, 23, 0) 35%), url("/gangstar-capa.jpg") center / cover no-repeat; animation: gs-splash-zoom 6s ease-out both; }
+@keyframes gs-splash-zoom { from { transform: scale(1.08); } to { transform: scale(1); } }
+.gs-splash-conteudo { flex: 1; display: grid; align-content: center; justify-items: center; gap: 18px; padding: 24px 28px 60px; text-align: center; }
+.gs-splash-frase { margin: 0; font-family: "Special Elite", "Courier New", monospace; font-size: 18px; line-height: 1.5; color: #f4e9ff; text-shadow: 0 0 12px rgba(255, 79, 216, 0.35); animation: gs-splash-frase 0.8s ease-out 0.2s both; }
+@keyframes gs-splash-frase { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.gs-splash-barra { width: 70%; height: 8px; border-radius: 4px; background: #1a0f2e; border: 1px solid #3a2a52; overflow: hidden; }
+.gs-splash-barra > div { height: 100%; background: linear-gradient(90deg, #ff4fd8, #ffb020); animation: gs-splash-barra 1.5s ease-in-out both; }
+@keyframes gs-splash-barra { from { width: 0; } to { width: 100%; } }
+.gs-splash small { font-family: "Press Start 2P", monospace; font-size: 8px; letter-spacing: 1px; color: #9d8bbd; }
+
+.gs-btn-instalar { margin-top: 14px; width: 100%; background: transparent; border: 2px dashed #5ac8fa; color: #bfeaff; }
+.gs-passos-instalar { display: grid; gap: 8px; margin: 12px 0; padding-left: 20px; list-style: decimal; font-size: 14px; line-height: 1.45; color: #e9dcff; }
+
+.gs-temporada-card { display: flex; align-items: center; gap: 10px; margin: 8px 0 12px; padding: 10px 12px; border-radius: 12px; background: linear-gradient(135deg, #3a2a0a, #1a0f2e); border: 2px solid #ffd23f; }
+.gs-temporada-card > span { font-size: 28px; }
+.gs-temporada-card > div { display: grid; gap: 2px; }
+.gs-temporada-card strong { font-size: 14px; color: #ffd23f; }
+.gs-temporada-card small { font-size: 11px; color: #e9dcff; line-height: 1.35; }
+.gs-trofeus { display: grid; gap: 6px; margin-bottom: 14px; }
+.gs-trofeu { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; background: #1a0f2e; border: 2px solid #3a2a52; }
+.gs-trofeu > span { grid-row: 1 / 3; font-size: 30px; }
+.gs-trofeu strong { font-size: 13px; color: #fff; }
+.gs-trofeu small { font-size: 11px; color: #9d8bbd; }
+.gs-trofeu-1 { border-color: #ffd23f; box-shadow: 0 0 12px rgba(255, 210, 63, 0.3); }
+.gs-trofeu-2 { border-color: #c9d1db; }
+.gs-trofeu-3 { border-color: #cd7f32; }
+.gs-fim-temporada { text-align: center; }
+.gs-fim-temporada-rotulo { font-family: "Press Start 2P", monospace; font-size: 9px; letter-spacing: 1px; color: #ffb020; }
+.gs-fim-temporada-posicao { margin: 8px auto; font-family: "Press Start 2P", monospace; font-size: 40px; color: #ffd23f; text-shadow: 0 0 16px rgba(255, 210, 63, 0.5); }
+.gs-fim-temporada p { margin: 0 0 10px; font-size: 14px; line-height: 1.45; color: #e9dcff; }
+
+.gs-camada-periodo { position: absolute; inset: 0; pointer-events: none; }

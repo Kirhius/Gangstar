@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { PREDIOS, PREDIOS_CIDADE, type PredioInstancia } from "@/lib/gangstar";
 import { BotaoOlho, TagsMapa } from "./TagsMapa";
+import { CamadaPeriodo } from "./periodo";
 import { CAMADAS_MAPA, MAPA_H, MAPA_W } from "./camadasMapa";
 
 const BASE = "/gangstar/cidade";
@@ -40,6 +41,8 @@ export function MapaCidade({
             <image key={`predio-${c.id}`} href={`${BASE}/predio-${c.id}.webp?v=${VERSAO_ARTE}`} x={c.predio.x} y={c.predio.y} width={c.predio.w} height={c.predio.h} />
           ) : null,
         )}
+
+        <CamadaPeriodo w={MAPA_W} h={MAPA_H} />
 
         {daTrasPraFrente.map((c) => {
           const construido = !!predios[c.id];

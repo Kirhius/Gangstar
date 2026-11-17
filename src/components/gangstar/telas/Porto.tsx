@@ -19,6 +19,7 @@ import {
 } from "@/lib/gangstar";
 import { itemPorId } from "@/lib/gangstarItens";
 import { PopupResultado, type ResultadoPopup } from "../PopupResultado";
+import { CamadaPeriodoDiv } from "../mapa/periodo";
 import { TituloComAjuda } from "../TituloComAjuda";
 
 function formatarDinheiro(v: number): string {
@@ -102,6 +103,7 @@ export function Porto({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar: 
 
       <div className="gs-porto-mapa">
         <img src="/gangstar/porto/porto.webp" alt="Mapa do porto" width={880} height={1196} />
+        <CamadaPeriodoDiv />
         <div className="gs-porto-navios">
           {navios.map((n) => (
             <span key={n.id} className="gs-porto-navio" title={`${n.destino}`}>

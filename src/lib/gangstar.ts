@@ -153,6 +153,10 @@ export interface GangstarSave {
   regenResto?: { energia: number; vida: number; vicio: number };
   // carteira na bolsa de valores: quantidade e preco medio por acao
   acoes?: Record<string, { qtd: number; precoMedio: number }>;
+  // temporada mensal: mes atual ("2026-11"), trofeus ganhos e o resultado da ultima temporada
+  temporada?: { mes: string };
+  trofeus?: Trofeu[];
+  ultimaTemporada?: { mes: string; posicao: number; titulo: string | null; respeito: number; visto: boolean };
   // centavos de juros do banco que ainda nao viraram real (o jogo atualiza a cada 10s)
   jurosResto?: number;
   // ultima vez que a lealdade dos bandidos caiu (1 ponto a cada 3h)
@@ -486,8 +490,10 @@ export const GANGUES_RIVAIS: GangueRivalDef[] = [
   { id: "imperio-escarlate", nome: "Império Escarlate", estilo: "agressiva", forcaBase: 450, respeitoBase: 30000 },
 ];
 
-function fatorCrescimentoGangues(save: GangstarSave): number {
-  const dias = Math.max(0, (Date.now() - save.criadoEm) / 86400000);
+// as gangues rivais crescem 1,5% por dia ao longo da temporada (que comeca no dia 1 de cada mes)
+function fatorCrescimentoGangues(save: GangstarSave, agora = Date.now()): number {
+  const inicio = Math.max(save.criadoEm, inicioDoMes(agora));
+  const dias = Math.max(0, (agora - inicio) / 86400000);
   return 1 + dias * 0.015;
 }
 
@@ -1406,7 +1412,8 @@ export function atualizarComTempo(saveOriginal: GangstarSave): GangstarSave {
   return aplicarRegeneracao(save);
 }
 
-function aplicarRegeneracao(save: GangstarSave): GangstarSave {
+function aplicarRegeneracao(saveOriginal: GangstarSave): GangstarSave {
+  const save = verificarTemporada(saveOriginal);
   const agora = Date.now();
   const decorrido = Math.max(0, agora - save.ultimaAtualizacao);
   const p = { ...save.personagem };
@@ -4305,4 +4312,95 @@ export function liberacoesDoNivel(n: number): string[] {
   if (n > NIVEL_PORTO && (n - NIVEL_PORTO) % 2 === 0 && n <= 23) l.push("📦 Mercador e Porto: produtos melhores e encomendas que pagam mais");
   if (n === NIVEL_BOLSA) l.push("📈 Bolsa de Valores (no Hub)");
   return l;
+}
+
+
+// =====================================================================
+// v1.1: Temporada mensal. No dia 1 de cada mes o imperio zera; quem terminou o mes
+// no top 3 do ranking de gangues ganha titulo e trofeu permanentes.
+// =====================================================================
+
+export interface Trofeu {
+  mes: string; // "2026-11"
+  posicao: number; // 1, 2 ou 3
+  titulo: string;
+  respeito: number;
+}
+
+const NOMES_MES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+export function mesDaTemporada(agora = Date.now()): string {
+  const d = new Date(agora);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function inicioDoMes(agora = Date.now()): number {
+  const d = new Date(agora);
+  return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+}
+
+export function fimDaTemporada(agora = Date.now()): number {
+  const d = new Date(agora);
+  return new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
+}
+
+export function nomeDoMes(mes: string): string {
+  const [ano, m] = mes.split("-").map(Number);
+  return `${NOMES_MES[(m || 1) - 1]}/${ano}`;
+}
+
+export const TITULOS_TEMPORADA = [
+  { emoji: "👑", nome: "Rei do Crime", cor: "#ffd23f" },
+  { emoji: "🥈", nome: "Barão do Crime", cor: "#c9d1db" },
+  { emoji: "🥉", nome: "Capo do Crime", cor: "#cd7f32" },
+];
+
+export function tituloDaPosicao(posicao: number, mes: string): string | null {
+  const t = TITULOS_TEMPORADA[posicao - 1];
+  return t ? `${t.emoji} ${t.nome} de ${nomeDoMes(mes)}` : null;
+}
+
+export function diasParaFimDaTemporada(agora = Date.now()): number {
+  return Math.max(0, Math.ceil((fimDaTemporada(agora) - agora) / 86400000));
+}
+
+// posicao final: rivais com o crescimento do mes inteiro
+function posicaoFinal(save: GangstarSave, mes: string): number {
+  const [ano, m] = mes.split("-").map(Number);
+  const fim = new Date(ano, m, 1).getTime() - 1;
+  const rivais = GANGUES_RIVAIS.map((g) => Math.round(g.respeitoBase * fatorCrescimentoGangues(save, fim)));
+  return rivais.filter((r) => r > save.personagem.respeito).length + 1;
+}
+
+export function verificarTemporada(save: GangstarSave, agora = Date.now()): GangstarSave {
+  const mes = mesDaTemporada(agora);
+  if (!save.temporada) return { ...save, temporada: { mes } };
+  if (save.temporada.mes === mes) return save;
+
+  // virou o mes: fecha a temporada anterior e zera o imperio
+  const anterior = save.temporada.mes;
+  const posicao = posicaoFinal(save, anterior);
+  const titulo = tituloDaPosicao(posicao, anterior);
+  const p = save.personagem;
+  const trofeus = [...(save.trofeus ?? [])];
+  if (titulo) trofeus.push({ mes: anterior, posicao, titulo, respeito: p.respeito });
+  const novo = gangstar.novoJogo(p.nome, p.classe);
+  return {
+    ...novo,
+    personagem: { ...novo.personagem, gangue: p.gangue },
+    temporada: { mes },
+    trofeus,
+    ultimaTemporada: { mes: anterior, posicao, titulo, respeito: p.respeito, visto: false },
+  };
+}
+
+export function marcarTemporadaVista(save: GangstarSave): GangstarSave {
+  return save.ultimaTemporada ? { ...save, ultimaTemporada: { ...save.ultimaTemporada, visto: true } } : save;
+}
+
+export function tituloAtual(save: GangstarSave): Trofeu | null {
+  const t = save.trofeus ?? [];
+  if (!t.length) return null;
+  // o melhor titulo; empate fica o mais recente
+  return [...t].sort((a, b) => a.posicao - b.posicao || b.mes.localeCompare(a.mes))[0];
 }

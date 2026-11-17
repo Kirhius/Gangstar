@@ -14,6 +14,9 @@ import {
   eventosDaSemana,
   gangstar,
   liberacoesDoNivel,
+  marcarTemporadaVista,
+  nomeDoMes,
+  tituloAtual,
   notificacoesMissoes,
   xpDoNivel,
 } from "@/lib/gangstar";
@@ -124,7 +127,10 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
           </button>
           <div className="gs-cabecalho-info">
             <strong className="gs-cabecalho-nome">{save.personagem.nome}</strong>
-            <span className="gs-cabecalho-sub">{save.personagem.gangue ?? "Sem gangue"}</span>
+            <span className="gs-cabecalho-sub">
+              {tituloAtual(save) && <span title={tituloAtual(save)!.titulo}>{tituloAtual(save)!.titulo.split(" ")[0]} </span>}
+              {save.personagem.gangue ?? "Sem gangue"}
+            </span>
           </div>
           <button className="gs-evento-dia" title={`${evento.dia}: ${evento.descricao}`} onClick={() => setVerEventos(true)}>
             <span className="gs-evento-dia-emoji">{evento.emoji}</span>
@@ -248,6 +254,30 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
             </div>
             <button className="gs-btn gs-btn-principal gs-btn-bloco" onClick={() => setSubiu(null)}>
               Bora!
+            </button>
+          </div>
+        </div>
+      )}
+      {save.ultimaTemporada && !save.ultimaTemporada.visto && (
+        <div className="gs-popup-fundo">
+          <div className="gs-popup-painel gs-fim-temporada">
+            <small className="gs-fim-temporada-rotulo">FIM DA TEMPORADA</small>
+            <h3 className="gs-h3" style={{ margin: 0 }}>
+              {nomeDoMes(save.ultimaTemporada.mes)}
+            </h3>
+            <div className="gs-fim-temporada-posicao">{save.ultimaTemporada.posicao}º</div>
+            {save.ultimaTemporada.titulo ? (
+              <p>
+                Você terminou no top 3 com {save.ultimaTemporada.respeito.toLocaleString("pt-BR")} de respeito e ganhou o título permanente <strong>{save.ultimaTemporada.titulo}</strong>.
+              </p>
+            ) : (
+              <p>
+                Você terminou com {save.ultimaTemporada.respeito.toLocaleString("pt-BR")} de respeito. Só o top 3 leva título e troféu — essa temporada é sua chance.
+              </p>
+            )}
+            <p className="gs-dica">Um novo mês começou: seu império voltou do zero. Seu nome, sua gangue e seus troféus ficam para sempre.</p>
+            <button className="gs-btn gs-btn-principal gs-btn-bloco" onClick={() => atualizar(marcarTemporadaVista(save))}>
+              Começar a nova temporada
             </button>
           </div>
         </div>

@@ -12,6 +12,9 @@ import {
   eventoAtualView,
   rankingGangues,
   territoriosView,
+  diasParaFimDaTemporada,
+  mesDaTemporada,
+  nomeDoMes,
 } from "@/lib/gangstar";
 
 function formatarDinheiro(v: number): string {
@@ -96,6 +99,15 @@ export function Gangue({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
 
       {visao === "ranking" && (
         <>
+          <div className="gs-temporada-card">
+            <span>🏆</span>
+            <div>
+              <strong>Temporada de {nomeDoMes(save.temporada?.mes ?? mesDaTemporada())}</strong>
+              <small>
+                Termina em {diasParaFimDaTemporada()} {diasParaFimDaTemporada() === 1 ? "dia" : "dias"}. Top 3 ganha título e troféu permanentes; no dia 1 o império volta do zero.
+              </small>
+            </div>
+          </div>
           <h3 className="gs-h3">Ranking de respeito (PvE)</h3>
           <p className="gs-p-intro">
             Você está em {posicao}º lugar de {ranking.length}.

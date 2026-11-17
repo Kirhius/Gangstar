@@ -38,6 +38,13 @@ Deploy: Vercel (importar o repositório, sem configuração extra). O save fica 
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.1.0
+
+- **Tela de carregamento:** a capa do jogo com uma frase de crime aleatória e uma barra de carregamento enquanto o jogo abre.
+- **Botão "Instalar app"** na tela inicial: no Android instala direto; no iPhone mostra o passo a passo do Safari. Some quando o jogo já está instalado.
+- **Temporada mensal:** no dia 1 de cada mês o império volta do zero (dinheiro, prédios, bandidos, itens, nível, história). Quem terminar o mês no top 3 do ranking de gangues ganha um título permanente (👑 Rei do Crime, 🥈 Barão do Crime, 🥉 Capo do Crime) e um troféu na nova Sala de troféus do Perfil. Ficam para sempre: nome, gangue e troféus. As gangues rivais agora crescem a partir do dia 1 de cada mês. O ranking mostra quantos dias faltam para a temporada acabar e o melhor título aparece no topo, ao lado do nome da gangue.
+- **Dia e noite nos mapas:** Minha Cidade, Hub e Porto mudam de cor conforme a hora real — amanhecer (5h–6h30), dia, entardecer (17h–18h45) e noite. É só uma camada de cor por cima da arte; nada no mapa muda de lugar.
+
 ## v1.0.0
 
 - Gangstar separado do FutOnze: projeto, domínio, ícone, manifesto e service worker próprios. Abre direto na tela do jogo.
