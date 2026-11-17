@@ -574,3 +574,29 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-fim-temporada p { margin: 0 0 10px; font-size: 14px; line-height: 1.45; color: #e9dcff; }
 
 .gs-camada-periodo { position: absolute; inset: 0; pointer-events: none; }
+
+/* ---------- v1.2: login, multiplayer e PvP ---------- */
+.gs-login { gap: 10px; }
+.gs-login .gs-campo { margin: 0; }
+.gs-login .gs-input { width: 100%; }
+.gs-btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #fff; color: #1f1f1f; border: 2px solid #fff; }
+.gs-google-g { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(#ea4335 0 25%, #fbbc05 0 50%, #34a853 0 75%, #4285f4 0); color: #fff; font-family: Arial, sans-serif; font-weight: 700; font-size: 13px; }
+.gs-login-ou { display: flex; align-items: center; gap: 10px; margin: 6px 0 2px; color: #9d8bbd; font-size: 12px; }
+.gs-login-ou::before, .gs-login-ou::after { content: ""; flex: 1; height: 1px; background: #3a2a52; }
+.gs-login-trocar { justify-self: center; align-self: center; margin-top: 2px; }
+.gs-aviso-ok { border-color: #4caf7a !important; color: #bff5d2 !important; }
+
+.gs-alvos-reais { margin: 4px 0 14px; padding: 10px; border-radius: 12px; border: 2px solid #5ac8fa; background: linear-gradient(160deg, #0f2338, #150a24); }
+.gs-alvos-reais .gs-h3 { margin-top: 0; }
+.gs-card-real { border-color: #2f6f99; }
+.gs-tag-real { display: inline-block; margin-right: 6px; padding: 1px 5px; border-radius: 4px; background: #0f2338; border: 1px solid #5ac8fa; color: #bfeaff; font-size: 9px; font-weight: 700; vertical-align: 1px; }
+.gs-ataque-recebido { text-align: center; }
+.gs-ataque-perdeu { border-color: #e04b4b !important; }
+.gs-ataque-defendeu { border-color: #4caf7a !important; }
+.gs-ataque-emoji { margin: 8px 0; font-size: 46px; }
+.gs-ataque-recebido p { margin: 0 0 10px; font-size: 14px; line-height: 1.45; color: #e9dcff; }
+.gs-ataque-efeitos { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 12px; }
+.gs-ataque-efeitos span { padding: 4px 8px; border-radius: 6px; background: #1a0f2e; border: 1px solid #3a2a52; font-size: 12px; color: #fff; }
+.gs-conta { display: grid; gap: 6px; margin-top: 14px; text-align: center; }
+.gs-conta small { color: #9d8bbd; font-size: 12px; }
+.gs-login .gs-btn { width: 100%; }

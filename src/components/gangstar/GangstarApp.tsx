@@ -30,6 +30,8 @@ import { Emboscada } from "./telas/Emboscada";
 import { Extorsoes } from "./telas/Extorsoes";
 import { Inventario } from "./telas/Inventario";
 import { Missoes } from "./telas/Missoes";
+import { useConta } from "./conta";
+import { agendarSync, aplicarAtaque, assinarAtaquesRecebidos, ataquesPendentes, atualizarJogadores, type AtaqueRegistro } from "@/lib/multiplayer";
 import { gravarNav, lerNav } from "./navegacao";
 
 type Aba = "minha-cidade" | "cidade" | "roubos" | "gangue" | "perfil" | "porto" | "emboscada" | "extorsoes" | "inventario" | "missoes";
@@ -105,6 +107,35 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
     }, 1000);
     return () => clearInterval(t);
   }, [presoAte]);
+
+  // ---------- multiplayer: save na nuvem, ataques recebidos em tempo real, jogadores reais ----------
+  const conta = useConta();
+  useEffect(() => {
+    if (conta && save) agendarSync(save);
+  }, [conta, save]);
+  const [ataquesRecebidos, setAtaquesRecebidos] = useState<AtaqueRegistro[]>([]);
+  const carregou = save !== null;
+  useEffect(() => {
+    if (!conta || !carregou) return;
+    // aplica o lado deste jogador do ataque (o mesmo registro que o outro aparelho le)
+    const aplicar = (a: AtaqueRegistro) => {
+      setSave((atual) => {
+        if (!atual) return atual;
+        const novo = aplicarAtaque(atual, a, conta.userId);
+        gangstar.salvar(novo);
+        return novo;
+      });
+      if (a.defensor === conta.userId) setAtaquesRecebidos((l) => (l.some((x) => x.id === a.id) ? l : [...l, a]));
+    };
+    ataquesPendentes(conta.userId).then((lista) => lista.forEach(aplicar));
+    const parar = assinarAtaquesRecebidos(conta.userId, aplicar);
+    atualizarJogadores();
+    const t = setInterval(atualizarJogadores, 30000);
+    return () => {
+      parar();
+      clearInterval(t);
+    };
+  }, [conta, carregou]);
 
   if (!save) return null;
   const avisosMissoes = notificacoesMissoes(save);
@@ -282,6 +313,37 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
           </div>
         </div>
       )}
+      {ataquesRecebidos.length > 0 && !subiu && (() => {
+        const a = ataquesRecebidos[0];
+        const perdeu = a.venceu;
+        const quem = `${a.atacante_nome ?? "Alguém"}${a.atacante_gangue ? ` (${a.atacante_gangue})` : ""}`;
+        return (
+          <div className="gs-popup-fundo">
+            <div className={`gs-popup-painel gs-ataque-recebido ${perdeu ? "gs-ataque-perdeu" : "gs-ataque-defendeu"}`}>
+              <small className="gs-fim-temporada-rotulo">{perdeu ? "VOCÊ FOI EMBOSCADO" : "ATAQUE REPELIDO"}</small>
+              <div className="gs-ataque-emoji">{perdeu ? "💥" : "🛡️"}</div>
+              <p>
+                <strong>{quem}</strong> atacou você {perdeu ? "e venceu." : "e saiu no prejuízo."}
+              </p>
+              <div className="gs-ataque-efeitos">
+                {a.efeito_defensor.dinheiro !== 0 && <span>💰 {a.efeito_defensor.dinheiro < 0 ? "−" : "+"}R$ {Math.abs(a.efeito_defensor.dinheiro).toLocaleString("pt-BR")}</span>}
+                {a.efeito_defensor.respeito !== 0 && (
+                  <span>
+                    ⭐ {a.efeito_defensor.respeito > 0 ? "+" : ""}
+                    {a.efeito_defensor.respeito} respeito
+                  </span>
+                )}
+                {a.efeito_defensor.vida !== 0 && <span>❤️ {a.efeito_defensor.vida} vida</span>}
+                {a.efeito_defensor.xp > 0 && <span>✨ +{a.efeito_defensor.xp} XP</span>}
+              </div>
+              {perdeu && <p className="gs-dica">Você ficou 1 hora protegido contra novos ataques. Guarde dinheiro no banco: só o dinheiro em mãos pode ser levado.</p>}
+              <button className="gs-btn gs-btn-principal gs-btn-bloco" onClick={() => setAtaquesRecebidos((l) => l.slice(1))}>
+                {perdeu ? "Vou me vingar" : "Boa!"}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

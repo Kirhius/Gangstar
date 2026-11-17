@@ -16,7 +16,7 @@ const CAMADA: Record<PeriodoDia, { cor: string; opacidade: number; modo: "multip
   dia: null,
   amanhecer: { cor: "#ff9ec4", opacidade: 0.28, modo: "soft-light" },
   entardecer: { cor: "#ff8a3d", opacidade: 0.32, modo: "soft-light" },
-  noite: { cor: "#1c2a6b", opacidade: 0.58, modo: "multiply" },
+  noite: { cor: "#3a4a9a", opacidade: 0.4, modo: "multiply" },
 };
 
 // para mapas em SVG (Minha Cidade e Hub): um retangulo por cima das imagens

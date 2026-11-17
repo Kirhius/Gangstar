@@ -117,8 +117,11 @@ export function Gangue({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
               <div key={r.nome} className={`gs-card gs-ranking-item ${r.voce ? "gs-card-ativo" : ""}`}>
                 <span className="gs-card-emoji">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`}</span>
                 <div className="gs-card-corpo">
-                  <strong>{r.nome}</strong>
-                  <span className="gs-card-sub">{r.respeito} de respeito</span>
+                  <strong>
+                    {r.real && <span className="gs-tag-real">👤 JOGADOR</span>}
+                    {r.nome}
+                  </strong>
+                  <span className="gs-card-sub">{r.respeito.toLocaleString("pt-BR")} de respeito</span>
                 </div>
               </div>
             ))}

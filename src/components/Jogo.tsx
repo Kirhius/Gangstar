@@ -3,8 +3,11 @@
 // Raiz do app: tela de carregamento (capa + frase de crime aleatoria), depois o Gangstar.
 // Tambem registra o service worker (funciona offline).
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GangstarInicio } from "./gangstar/GangstarInicio";
+import { TelaLogin } from "./gangstar/TelaLogin";
+import { ContaContexto, type Conta } from "./gangstar/conta";
+import { definirUsuario, ouvirSessao, sessaoAtual, sincronizarAoEntrar, supabaseConfigurado } from "@/lib/multiplayer";
 import "./gangstar/instalar";
 
 const FRASES = [
@@ -30,6 +33,37 @@ const TEMPO_MINIMO = 1600;
 export function Jogo() {
   const [pronto, setPronto] = useState(false);
   const [frase, setFrase] = useState("");
+  // multiplayer: "carregando" ate saber se ha sessao; null = precisa entrar
+  const online = supabaseConfigurado();
+  const [conta, setConta] = useState<Conta | null | "carregando">(online ? "carregando" : null);
+  const idAtual = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (!online) return;
+    let ativo = true;
+    const entrar = async (userId: string | null, email: string | null) => {
+      idAtual.current = userId;
+      if (!userId) {
+        definirUsuario(null);
+        if (ativo) setConta(null);
+        return;
+      }
+      setConta("carregando");
+      await sincronizarAoEntrar(userId).catch(() => undefined);
+      definirUsuario(userId);
+      if (ativo) setConta({ userId, email });
+    };
+    sessaoAtual().then((s) => entrar(s?.user.id ?? null, s?.user.email ?? null));
+    const parar = ouvirSessao((s) => {
+      const id = s?.user.id ?? null;
+      if (id !== idAtual.current) entrar(id, s?.user.email ?? null);
+    });
+    return () => {
+      ativo = false;
+      parar();
+    };
+  }, [online]);
+
   useEffect(() => {
     setFrase(FRASES[Math.floor(Math.random() * FRASES.length)]);
     const t = setTimeout(() => setPronto(true), TEMPO_MINIMO);
@@ -38,7 +72,7 @@ export function Jogo() {
     }
     return () => clearTimeout(t);
   }, []);
-  if (!pronto) {
+  if (!pronto || conta === "carregando") {
     return (
       <div className="gs-splash" role="status" aria-label="Carregando o Gangstar">
         <div className="gs-splash-capa" aria-hidden="true" />
@@ -52,5 +86,11 @@ export function Jogo() {
       </div>
     );
   }
-  return <GangstarInicio />;
+  if (online && !conta) return <TelaLogin />;
+  return (
+    <ContaContexto.Provider value={conta}>
+      {/* key: trocar de conta recarrega o jogo do zero */}
+      <GangstarInicio key={conta?.userId ?? "offline"} />
+    </ContaContexto.Provider>
+  );
 }

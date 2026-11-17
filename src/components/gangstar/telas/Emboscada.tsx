@@ -30,6 +30,7 @@ import {
   type ResultadoEmboscada,
 } from "@/lib/gangstar";
 import { itemPorId } from "@/lib/gangstarItens";
+import { AlvosReais } from "../AlvosReais";
 import { PopupResultado, type ResultadoPopup } from "../PopupResultado";
 
 function formatarDinheiro(v: number): string {
@@ -194,6 +195,9 @@ export function Emboscada({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
         </span>
       </label>
 
+      <AlvosReais save={save} aoAtualizar={aoAtualizar} aoResultado={setResultado} />
+
+      <h3 className="gs-h3">🗡️ Alvos de IA</h3>
       {p.vida < 20 && <div className="gs-aviso">❤️ Você está muito ferido para emboscar. Cure-se no Hospital ou use um medicamento.</div>}
       {mensagem && <div className="gs-aviso">{mensagem}</div>}
       <div className="gs-lista">

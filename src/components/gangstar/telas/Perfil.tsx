@@ -5,7 +5,9 @@
 // v4.58: 3 slots de equipamento - arma, colete e especial (itens raros, v4.60).
 
 import { useState } from "react";
-import { ARMAS, CLASSES, GangstarSave, armaEquipada, coleteEquipado, desequipar, equiparArma, equiparItem, poderDeRoubo, proximoNivelInfo, qtdItem, especialEquipado, durabilidadeItem, durabilidadeMax, podePrestigiar, prestigiar } from "@/lib/gangstar";
+import { useConta } from "../conta";
+import { sairDaConta } from "@/lib/multiplayer";
+import { ARMAS, CLASSES, GangstarSave, armaEquipada, coleteEquipado, desequipar, equiparArma, equiparItem, poderDeRoubo, proximoNivelInfo, qtdItem, especialEquipado, durabilidadeItem, durabilidadeMax } from "@/lib/gangstar";
 import { ITENS, ITENS_RAROS, RARIDADES } from "@/lib/gangstarItens";
 
 function Barra({ valor, max, cor }: { valor: number; max: number; cor: string }) {
@@ -22,7 +24,7 @@ type Slot = "arma" | "colete" | "especial";
 export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAtualizar: (s: GangstarSave) => void; aoSair?: () => void }) {
   const p = save.personagem;
   const [escolhendo, setEscolhendo] = useState<Slot | null>(null);
-  const [msgPrestigio, setMsgPrestigio] = useState<string | null>(null);
+  const conta = useConta();
   const arma = armaEquipada(save);
   const colete = coleteEquipado(save);
   const especial = especialEquipado(save);
@@ -220,29 +222,25 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
         </div>
       )}
 
-      <h3 className="gs-h3">Prestígio {save.prestigio > 0 && `(nível ${save.prestigio})`}</h3>
-      <p className="gs-p-intro">
-        Reinicie seu progresso (dinheiro, prédios e bandidos) em troca de um bônus permanente de +2% em todo dinheiro ganho, por nível.
-        {save.prestigio > 0 && ` Você já tem +${Math.round(save.prestigio * 2)}% permanente.`}
-      </p>
-      {msgPrestigio && <div className="gs-aviso">{msgPrestigio}</div>}
-      <button
-        className="gs-btn gs-btn-secundario gs-btn-bloco"
-        disabled={!podePrestigiar(save)}
-        onClick={() => {
-          const r = prestigiar(save);
-          if (r.erro) return setMsgPrestigio(`⚠️ ${r.erro}`);
-          setMsgPrestigio("🌟 Prestígio! Seu progresso reiniciou, mas seus bônus permanentes aumentaram.");
-          aoAtualizar(r.save);
-        }}
-      >
-        {podePrestigiar(save) ? "🌟 Prestigiar agora" : "🌟 Prestígio (patrimônio mínimo R$ 100.000)"}
-      </button>
 
       {aoSair && (
         <button className="gs-btn gs-btn-bloco gs-btn-sair" onClick={aoSair}>
           ← Voltar à tela inicial
         </button>
+      )}
+      {conta && (
+        <div className="gs-conta">
+          <small>Conta: {conta.email ?? "Google"}</small>
+          <button
+            className="gs-btn gs-btn-bloco gs-btn-sair"
+            onClick={async () => {
+              await sairDaConta(save);
+              window.location.reload();
+            }}
+          >
+            🚪 Sair da conta
+          </button>
+        </div>
       )}
     </div>
   );

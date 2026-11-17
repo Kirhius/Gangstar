@@ -6,6 +6,7 @@
 
 import { GangstarSave, durabilidadeItem, durabilidadeMax, multQualidade, parseChave } from "@/lib/gangstar";
 import { NotaQualidade } from "../NotaQualidade";
+import { TituloComAjuda } from "../TituloComAjuda";
 import { NOME_CATEGORIA, RARIDADES, itemPorId, type CategoriaItem, type ItemDef } from "@/lib/gangstarItens";
 
 function formatarDinheiro(v: number): string {
@@ -45,12 +46,21 @@ export function Inventario({ save, aoAtualizar }: { save: GangstarSave; aoAtuali
 
   return (
     <div className="gs-pagina">
-      <h2 className="gs-h2">🎒 Inventário</h2>
-      <p className="gs-p-intro">
-        {total} {total === 1 ? "item" : "itens"}. Produza nas fábricas da Minha Cidade, compre do Mercador ou saqueie em emboscadas.
-      </p>
-      <p className="gs-dica">Só para consulta. Consumíveis vão para a prateleira da sua Boate (lá você consome e vende); armas, coletes e itens raros se equipam no Perfil. Qualidade: C, B, A, S e SS — fábricas com mais nível e contrabandistas na gangue produzem melhor.</p>
-      {pilhas.length === 0 && <p className="gs-dica">Seu inventário está vazio.</p>}
+      <TituloComAjuda
+        titulo="🎒 Inventário"
+        ajuda={
+          <>
+            <p>
+              {total} {total === 1 ? "item" : "itens"}. Produza nas fábricas da Minha Cidade, compre do Mercador ou saqueie em emboscadas.
+            </p>
+            <p>
+              Só para consulta. Consumíveis vão para a prateleira da sua Boate (lá você consome e vende); armas, coletes e itens raros se equipam no Perfil.
+            </p>
+            <p>Qualidade: C, B, A, S e SS — fábricas com mais nível e contrabandistas na gangue produzem melhor.</p>
+          </>
+        }
+      />
+      {pilhas.length === 0 && <p className="gs-dica">Inventário vazio</p>}
       {ORDEM.map((cat) => {
         const daCat = pilhas.filter((p) => p.item.categoria === cat);
         if (!daCat.length) return null;

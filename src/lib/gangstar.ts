@@ -156,6 +156,8 @@ export interface GangstarSave {
   // temporada mensal: mes atual ("2026-11"), trofeus ganhos e o resultado da ultima temporada
   temporada?: { mes: string };
   trofeus?: Trofeu[];
+  // ids dos ataques PvP ja aplicados neste save (para nunca aplicar o mesmo duas vezes)
+  pvpAplicados?: string[];
   ultimaTemporada?: { mes: string; posicao: number; titulo: string | null; respeito: number; visto: boolean };
   // centavos de juros do banco que ainda nao viraram real (o jogo atualiza a cada 10s)
   jurosResto?: number;
@@ -505,11 +507,28 @@ export function forcaEfetiva(gang: GangueRivalDef, save: GangstarSave): number {
   return Math.round(gang.forcaBase * fatorCrescimentoGangues(save) * 10) / 10;
 }
 
-export function rankingGangues(save: GangstarSave): { nome: string; respeito: number; voce: boolean }[] {
+export function rankingGangues(save: GangstarSave): { nome: string; respeito: number; voce: boolean; real?: boolean }[] {
   const p = save.personagem;
   const rivais = GANGUES_RIVAIS.map((g) => ({ nome: g.nome, respeito: respeitoEfetivo(g, save), voce: false }));
+  // jogadores reais (multiplayer) entram no mesmo ranking das gangues de IA
+  const reais = jogadoresReais
+    .filter((j) => !j.temporada || j.temporada === (save.temporada?.mes ?? mesDaTemporada()))
+    .map((j) => ({ nome: j.gangue ? `${j.gangue} · ${j.nome}` : j.nome, respeito: j.respeito, voce: false, real: true }));
   const jogador = { nome: p.gangue ? `${p.gangue} (você)` : `${p.nome} (você)`, respeito: p.respeito, voce: true };
-  return [...rivais, jogador].sort((a, b) => b.respeito - a.respeito);
+  return [...rivais, ...reais, jogador].sort((a, b) => b.respeito - a.respeito);
+}
+
+// outros jogadores reais (preenchido pelo multiplayer; sem login fica vazio)
+export interface JogadorReal {
+  id: string;
+  nome: string;
+  gangue: string | null;
+  respeito: number;
+  temporada: string | null;
+}
+let jogadoresReais: JogadorReal[] = [];
+export function definirJogadoresReais(lista: JogadorReal[]): void {
+  jogadoresReais = lista;
 }
 
 // ---------- Território (zonas da Cidade pública) ----------
@@ -4369,7 +4388,8 @@ function posicaoFinal(save: GangstarSave, mes: string): number {
   const [ano, m] = mes.split("-").map(Number);
   const fim = new Date(ano, m, 1).getTime() - 1;
   const rivais = GANGUES_RIVAIS.map((g) => Math.round(g.respeitoBase * fatorCrescimentoGangues(save, fim)));
-  return rivais.filter((r) => r > save.personagem.respeito).length + 1;
+  const reais = jogadoresReais.filter((j) => j.temporada === mes).map((j) => j.respeito);
+  return [...rivais, ...reais].filter((r) => r > save.personagem.respeito).length + 1;
 }
 
 export function verificarTemporada(save: GangstarSave, agora = Date.now()): GangstarSave {
@@ -4403,4 +4423,51 @@ export function tituloAtual(save: GangstarSave): Trofeu | null {
   if (!t.length) return null;
   // o melhor titulo; empate fica o mais recente
   return [...t].sort((a, b) => a.posicao - b.posicao || b.mes.localeCompare(a.mes))[0];
+}
+
+
+// =====================================================================
+// v1.2: PvP entre jogadores reais. O servidor sorteia o resultado; cada aparelho
+// aplica o seu lado do MESMO registro (uma vez so, guardando o id do ataque).
+// =====================================================================
+
+export interface EfeitoPvpSave {
+  dinheiro: number;
+  respeito: number;
+  vida: number;
+  energia: number;
+  xp: number;
+}
+
+export function aplicarEfeitoPvp(save: GangstarSave, ataqueId: string, e: EfeitoPvpSave): GangstarSave {
+  if ((save.pvpAplicados ?? []).includes(ataqueId)) return save;
+  const p = save.personagem;
+  // perda de dinheiro nunca deixa o saldo abaixo de zero por causa do ataque
+  const dinheiro = e.dinheiro < 0 ? Math.max(Math.min(p.dinheiro, 0), p.dinheiro + e.dinheiro) : p.dinheiro + e.dinheiro;
+  let np: Personagem = {
+    ...p,
+    dinheiro,
+    respeito: Math.max(0, p.respeito + e.respeito),
+    vida: Math.max(1, Math.min(p.vidaMax, p.vida + e.vida)),
+    energia: Math.max(0, Math.min(p.energiaMax, p.energia + e.energia)),
+  };
+  if (e.xp > 0) np = ganharXp(np, e.xp);
+  return { ...save, personagem: np, pvpAplicados: [...(save.pvpAplicados ?? []), ataqueId].slice(-200) };
+}
+
+// o que vai para a tabela publica (ranking e lista de alvos)
+export function resumoPublico(save: GangstarSave) {
+  const p = save.personagem;
+  return {
+    nome: p.nome,
+    gangue: p.gangue,
+    nivel: p.nivel,
+    respeito: Math.round(p.respeito),
+    patrimonio: Math.round(patrimonio(save)),
+    poder: Math.round(poderEmboscada(save) * 10) / 10,
+    dinheiro: Math.round(p.dinheiro),
+    energia: Math.round(p.energia),
+    vida: Math.round(p.vida),
+    temporada: save.temporada?.mes ?? mesDaTemporada(),
+  };
 }

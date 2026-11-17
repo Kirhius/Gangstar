@@ -12,7 +12,17 @@ npm run dev     # http://localhost:3000
 npm run build   # build de produção
 ```
 
-Deploy: Vercel (importar o repositório, sem configuração extra). O save fica no `localStorage` do navegador (chave `gangstar:save:v10`).
+Deploy: Vercel. Sem as variáveis do Supabase o jogo roda offline (save só no aparelho). Com elas, vira multiplayer.
+
+## Multiplayer (Supabase)
+
+1. Crie um projeto no Supabase (ou use um existente: as tabelas têm prefixo `gs_`).
+2. No **SQL Editor**, rode o arquivo `supabase/schema.sql` inteiro.
+3. **Authentication → URL Configuration:** Site URL `https://gangstar1.vercel.app` e, em Redirect URLs, `https://gangstar1.vercel.app/**`.
+4. **Authentication → Providers → Google:** ative e cole o Client ID e o Client Secret do Google Cloud (OAuth, tipo "Aplicativo da Web", com a URL de callback que o Supabase mostra nessa tela).
+5. Na **Vercel → Settings → Environment Variables**, cadastre `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY` (veja `.env.example`) e faça um **Redeploy**.
+
+Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um resumo público (`gs_jogadores`) alimenta o ranking e a lista de alvos. Ataques PvP são resolvidos **só no servidor** (`/api/pvp/atacar`), que grava um registro único em `gs_ataques`; os dois aparelhos aplicam o mesmo resultado, e o defensor recebe na hora pelo Realtime.
 
 ## Estrutura
 
@@ -37,6 +47,15 @@ Deploy: Vercel (importar o repositório, sem configuração extra). O save fica 
 6. **Multiplayer:** contas (Supabase Auth), save na nuvem, ranking global, ataques PvP assíncronos e guerra entre gangues de amigos (ver plano no chat da v4.61).
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
+
+## v1.2.0
+
+- **Multiplayer:** login com Google ou e-mail e senha, save na nuvem (joga no celular e no computador com a mesma conta).
+- **Ranking misto:** jogadores reais entram no mesmo ranking das 20 gangues de IA (com a etiqueta 👤 JOGADOR) e contam para o top 3 da temporada.
+- **PvP em tempo real:** na Emboscada, a seção "Jogadores reais" permite atacar outros jogadores (nível 7+, custa ⚡15, o mesmo alvo a cada 6h). O resultado é sorteado no servidor uma única vez; quem ataca vê o resultado e quem foi atacado recebe um aviso na hora, com o mesmo resultado. Vencendo, leva 12% do dinheiro em mãos do outro (máx. R$ 100.000); quem perde dinheiro fica 1h protegido.
+- **Prestígio removido.**
+- **Inventário:** a explicação foi para o botão "?" ao lado do título; vazio mostra só "Inventário vazio".
+- **Noite mais clara** nos mapas.
 
 ## v1.1.0
 
