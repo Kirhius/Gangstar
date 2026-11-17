@@ -4526,12 +4526,13 @@ export function pagarComSujo(p: Personagem, valor: number): Personagem {
 
 // ---------- Fachadas ----------
 
+// v1.3.1: capacidade 5x maior (antes boate 2.000, hotel 3.000 e lojas 1.000 por hora)
 export const FACHADAS: Record<string, { porHora: number; taxa: number }> = {
-  boate: { porHora: 2000, taxa: 0.15 },
-  hotel: { porHora: 3000, taxa: 0.1 },
-  "loja-bebidas": { porHora: 1000, taxa: 0.2 },
-  "loja-farmacia": { porHora: 1000, taxa: 0.2 },
-  "loja-armas": { porHora: 1000, taxa: 0.2 },
+  boate: { porHora: 10000, taxa: 0.15 },
+  hotel: { porHora: 15000, taxa: 0.1 },
+  "loja-bebidas": { porHora: 5000, taxa: 0.2 },
+  "loja-farmacia": { porHora: 5000, taxa: 0.2 },
+  "loja-armas": { porHora: 5000, taxa: 0.2 },
 };
 
 export function ehFachada(tipo: string): boolean {

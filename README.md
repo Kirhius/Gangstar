@@ -48,10 +48,14 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.3.1
+
+- **Lavagem 5x mais rápida:** Boate R$ 10.000/h × nível, Hotel R$ 15.000/h × nível e lojas R$ 5.000/h × nível (as taxas continuam 15%, 10% e 20%).
+
 ## v1.3.0
 
 - **Dinheiro sujo e lavagem:** roubos, extorsões, emboscadas, capo, PvP e vendas ao Mercador pagam em dinheiro **sujo** (🩸). Ele paga Mercado Negro, Mercador, fiança, agiota, bandidos e a boate do Hub (sai primeiro). Banco, Bolsa, prédios, escola, academia, hospital e advogado só aceitam dinheiro **limpo** (💵).
-- **Fachadas:** Boate (R$ 2.000/h × nível, taxa 15%), Hotel (R$ 3.000/h × nível, 10%) e lojas (R$ 1.000/h × nível, 20%) lavam o dinheiro sujo aos poucos; o limpo cai sozinho no saldo. Em dia de Festa na Cidade a boate lava o dobro.
+- **Fachadas:** Boate, Hotel e lojas (valores atuais na v1.3.1) lavam o dinheiro sujo aos poucos; o limpo cai sozinho no saldo. Em dia de Festa na Cidade a boate lava o dobro.
 - **Alerta da Polícia Federal (0–100%):** sobe ao lavar (+1% a cada R$ 5.000; dobro na sexta) e cai 2%/h. Acima de 60%, batida fiscal (perde 20–40% do sujo e da fila, fachada lacrada por 2h); acima de 90%, pode dar prisão.
 - **Contador:** nova classe de bandido no Ponto de Recrutamento (reduz taxa e alerta; pode ser preso numa batida). **Advogado** na Delegacia (R$ 20.000 por 7 dias: −30% de alerta e fiança pela metade). Novo item raro **Livro-caixa duplo** (−30% de alerta).
 - **PvP:** o dinheiro sujo é levado primeiro (20%); sem sujo, 12% do limpo. O atacante recebe tudo como sujo. (Rode de novo o `supabase/schema.sql` para criar a coluna `dinheiro_sujo`.)
