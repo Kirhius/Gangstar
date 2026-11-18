@@ -568,7 +568,7 @@ function PainelLavagem({
               Coloque dinheiro sujo na fila desta fachada. Ela lava {formatarDinheiro(cap)} por hora (cresce com o nível) e fica com {Math.round(taxa * 100)}% de taxa — o resto
               volta para você como dinheiro limpo, aos poucos.
             </p>
-            <p>Lavar muito de uma vez sobe o alerta da Polícia Federal (+1% a cada R$ 5.000). Acima de 60%, pode ter batida fiscal; acima de 90%, prisão.</p>
+            <p>Lavar muito de uma vez sobe o alerta da Polícia Federal (+1% a cada R$ 5.000), e os roubos maiores também. O alerta cai 1% a cada 3 minutos. Acima de 60%, pode ter batida fiscal; acima de 90%, prisão.</p>
             <p>Contadores na gangue reduzem a taxa e o alerta; o advogado (na Delegacia) e o item raro Livro-caixa duplo também reduzem o alerta.</p>
           </>
         }

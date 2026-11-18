@@ -172,7 +172,7 @@ export interface GangstarSave {
   ultimaTemporada?: { mes: string; posicao: number; titulo: string | null; respeito: number; visto: boolean };
   // centavos de juros do banco que ainda nao viraram real (o jogo atualiza a cada 10s)
   jurosResto?: number;
-  // ultima vez que a lealdade dos bandidos caiu (1 ponto a cada 3h)
+  // ultima vez que a lealdade dos bandidos caiu (1 ponto a cada 4h)
   quedaLealdadeEm?: number;
   personagem: Personagem;
   // chave = id do predio no mapa (ver PREDIOS_CIDADE)
@@ -228,7 +228,7 @@ const EVENTOS_DIARIOS: EventoDiarioDef[] = [
   { id: "academia-dobro", dia: "Segunda", nome: "Academia 2x", emoji: "🏋️", descricao: "Treinos na academia dão o dobro de XP e de força." },
   { id: "escola-dobro", dia: "Terça", nome: "Escola 2x", emoji: "🎓", descricao: "Estudos na escola dão o dobro de XP e de intelecto." },
   { id: "lucro", dia: "Quarta", nome: "Coleta +20%", emoji: "💰", descricao: "Dinheiro coletado (prédios e extorsões) rende 20% a mais." },
-  { id: "recuperacao", dia: "Quinta", nome: "Regeneração 2x", emoji: "💚", descricao: "Energia, vida e vício se recuperam no dobro da velocidade." },
+  { id: "recuperacao", dia: "Quinta", nome: "Regeneração 2x", emoji: "💚", descricao: "Energia, vida, vício, alerta da Federal e lealdade dos bandidos se recuperam no dobro da velocidade." },
   { id: "operacao-policial", dia: "Sexta", nome: "Operação policial", emoji: "🚨", descricao: "Operação na cidade: chance de ser preso em dobro." },
   { id: "noite-boate", dia: "Sábado", nome: "Noite da boate", emoji: "🪩", descricao: "Sua boate recebe o dobro de clientes." },
 ];
@@ -926,15 +926,16 @@ function riscoFuga(save: GangstarSave): { save: GangstarSave; ocorrencias: strin
   return { save: registrar({ ...save, bandidos: save.bandidos.filter((b) => !ids.has(b.id)) }, textos), ocorrencias: textos };
 }
 
-// com o tempo a lealdade cai 1 ponto a cada 3h; lealdade baixa pode virar traicao
+// com o tempo a lealdade cai 1 ponto a cada 4h (2h na quinta); lealdade baixa pode virar traicao
 function processarGangue(save: GangstarSave, decorridoMs: number): GangstarSave {
   if (!save.bandidos?.length || decorridoMs <= 0) return save;
   const horas = decorridoMs / 3600000;
-  // lealdade cai 1 ponto a cada 3h, contando desde a ultima queda (e nao so do ultimo tick)
+  // lealdade cai 1 ponto a cada 4h, contando desde a ultima queda (e nao so do ultimo tick)
   const agora = Date.now();
+  const intervalo = (eventoDiarioAtivo("recuperacao") ? 2 : 4) * 3600000;
   const desde = save.quedaLealdadeEm ?? agora - decorridoMs;
-  const queda = Math.floor((agora - desde) / (3 * 3600000));
-  save = { ...save, quedaLealdadeEm: desde + queda * 3 * 3600000 };
+  const queda = Math.floor((agora - desde) / intervalo);
+  save = { ...save, quedaLealdadeEm: desde + queda * intervalo };
   let dinheiro = save.personagem.dinheiro;
   const textos: string[] = [];
   const ficam: Bandido[] = [];
@@ -1416,9 +1417,10 @@ function chancePrisaoSeFalhar(save: GangstarSave, roubo: Roubo): number {
 
 // ---------- Regeneracao por tempo real ----------
 
-const MS_POR_PONTO_ENERGIA = 2 * 60 * 1000; // 1 energia a cada 2 minutos
-const MS_POR_PONTO_VIDA = 3 * 60 * 1000; // 1 vida a cada 3 minutos
-const MS_POR_PONTO_VICIO = 10 * 60 * 1000; // vicio desce 1 ponto a cada 10 minutos
+// v1.8: regeneracao mais rapida (na quinta, evento Regeneracao 2x, tudo na metade do tempo)
+const MS_POR_PONTO_ENERGIA = 1 * 60 * 1000; // 1 energia a cada 1 minuto
+const MS_POR_PONTO_VIDA = 2 * 60 * 1000; // 1 vida a cada 2 minutos
+const MS_POR_PONTO_VICIO = 4 * 60 * 1000; // vicio desce 1 ponto a cada 4 minutos
 // v4.63: 0,1%/hora (~2,4% ao dia). Antes 0,4%/h (~10% ao dia) era dinheiro infinito
 const TAXA_CDI_POR_HORA = 0.001;
 
@@ -1477,8 +1479,12 @@ function aplicarRegeneracao(saveOriginal: GangstarSave): GangstarSave {
 
   if (p.preso && agora >= p.preso.ate) p.preso = null;
 
+  // v1.8: o alerta cai no ritmo do momento (mais rapido na quinta); grava o valor exato
+  const suspeita = save.suspeita ? { valor: suspeitaExata(save, agora), em: agora } : undefined;
+
   let novoSave: GangstarSave = {
     ...save,
+    suspeita,
     personagem: p,
     ultimaAtualizacao: agora,
     regenResto: { energia: rEnergia.resto, vida: rVida.resto, vicio: rVicio.resto },
@@ -2997,15 +3003,16 @@ export function tentarRoubo(save: GangstarSave, rouboId: string) {
   if (ferido) return { save, erro: ferido };
   const r = tentarRouboBase(save, rouboId);
   if (r.erro || !r.resultado) return r;
-  const s1 = contar(r.save, "roubos");
+  const s1 = somarAlerta(contar(r.save, "roubos"), alertaDoRoubo(rouboId));
   return posAcao(save, { ...r, save: r.resultado.tipo === "sucesso" ? contar(s1, "roubosOk") : s1 }, custoVida);
 }
 
 export function tentarMissaoEquipe(save: GangstarSave, missaoId: string, membroIds: string[]): { save: GangstarSave; resultado?: ResultadoMissaoEquipe; erro?: string; raro?: ItemDef } {
   const ferido = exigeVida(save, VIDA_ROUBO_EQUIPE);
   if (ferido) return { save, erro: ferido };
-  const r0 = tentarMissaoEquipeBase(save, missaoId, membroIds);
-  if (r0.erro || !r0.resultado) return r0;
+  const r00 = tentarMissaoEquipeBase(save, missaoId, membroIds);
+  if (r00.erro || !r00.resultado) return r00;
+  const r0 = { ...r00, save: somarAlerta(r00.save, alertaDaMissao(missaoId)) };
   const r = posAcao(save, r0, VIDA_ROUBO_EQUIPE);
   if (r.resultado?.tipo !== "sucesso") return r;
   let novo = contar(r.save, "missoesEquipeOk");
@@ -4592,11 +4599,43 @@ export function horasParaLavar(save: GangstarSave): number {
 export const SUSPEITA_BATIDA = 60;
 export const SUSPEITA_PRISAO = 90;
 
-export function suspeitaAtual(save: GangstarSave, agora = Date.now()): number {
+// v1.8: o alerta cai 1% a cada 3 minutos (20%/h); na quinta (Regeneracao 2x), 1% a cada 1,5 min
+export const MINUTOS_POR_PONTO_SUSPEITA = 3;
+
+function suspeitaExata(save: GangstarSave, agora = Date.now()): number {
   const s = save.suspeita;
   if (!s) return 0;
-  const horas = Math.max(0, (agora - s.em) / 3600000);
-  return Math.max(0, Math.round((s.valor - horas * 2) * 10) / 10);
+  const minutos = Math.max(0, (agora - s.em) / 60000) * (eventoDiarioAtivo("recuperacao") ? 2 : 1);
+  return Math.max(0, s.valor - minutos / MINUTOS_POR_PONTO_SUSPEITA);
+}
+
+export function suspeitaAtual(save: GangstarSave, agora = Date.now()): number {
+  return Math.round(suspeitaExata(save, agora) * 10) / 10;
+}
+
+// v1.8: roubos tambem chamam a atencao da policia. Solo: a partir do Golpe do falso PIX,
+// de +1% ate +10% no mais pesado. Equipe: de +10% na primeira ate +25% na ultima.
+const ALERTA_ROUBO: Record<string, number> = {};
+const ALERTA_MISSAO: Record<string, number> = {};
+{
+  const inicio = ROUBOS.findIndex((r) => r.id === "falso-pix");
+  const solo = ROUBOS.slice(inicio);
+  solo.forEach((r, i) => (ALERTA_ROUBO[r.id] = Math.round(1 + (i * 9) / Math.max(1, solo.length - 1))));
+  const equipe = MISSOES_EQUIPE.map((m, i) => ({ m, i })).sort((a, b) => a.m.nivelMin - b.m.nivelMin || a.m.dificuldade - b.m.dificuldade || a.i - b.i);
+  equipe.forEach(({ m }, i) => (ALERTA_MISSAO[m.id] = Math.round(10 + (i * 15) / Math.max(1, equipe.length - 1))));
+}
+
+export function alertaDoRoubo(rouboId: string): number {
+  return ALERTA_ROUBO[rouboId] ?? 0;
+}
+
+export function alertaDaMissao(missaoId: string): number {
+  return ALERTA_MISSAO[missaoId] ?? 0;
+}
+
+function somarAlerta(save: GangstarSave, pontos: number, agora = Date.now()): GangstarSave {
+  if (pontos <= 0) return save;
+  return { ...save, suspeita: { valor: Math.min(100, suspeitaExata(save, agora) + pontos), em: agora } };
 }
 
 export function advogadoAtivo(save: GangstarSave, agora = Date.now()): boolean {

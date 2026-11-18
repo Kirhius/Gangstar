@@ -59,7 +59,7 @@ export function PopupInfoTopo({ tipo, save, aoFechar }: { tipo: InfoTopo; save: 
       valor: `${p.energia}/${p.energiaMax}`,
       linhas: [
         "Gasta em roubos, emboscadas, extorsões, treinos e batalhas contra o capo.",
-        "Recupera 1 ponto a cada 2 minutos (o dobro na quinta). Bebidas, drogas e garotas da boate também dão energia.",
+        "Recupera 1 ponto por minuto (o dobro na quinta). Bebidas, drogas e garotas da boate também dão energia.",
       ],
     },
     vida: {
@@ -67,7 +67,7 @@ export function PopupInfoTopo({ tipo, save, aoFechar }: { tipo: InfoTopo; save: 
       valor: `${p.vida}/${p.vidaMax}`,
       linhas: [
         "Cada ação custa vida: roubo solo −2 (os 3 primeiros não), roubo em equipe −5, extorsão −1, emboscada −10.",
-        "Muito ferido, você não consegue agir. Recupera 1 ponto a cada 3 minutos; o Hospital e os remédios curam na hora.",
+        "Muito ferido, você não consegue agir. Recupera 1 ponto a cada 2 minutos (o dobro na quinta); o Hospital e os remédios curam na hora.",
       ],
     },
     respeito: {
@@ -82,7 +82,7 @@ export function PopupInfoTopo({ tipo, save, aoFechar }: { tipo: InfoTopo; save: 
       titulo: "🚨 Alerta da Polícia Federal",
       valor: `${Math.round(s)}%`,
       linhas: [
-        "Sobe quando você lava muito dinheiro de uma vez (+1% a cada R$ 5.000; em dobro na sexta). Cai 2% por hora sozinho.",
+        "Sobe quando você lava muito dinheiro de uma vez (+1% a cada R$ 5.000; em dobro na sexta) e a cada roubo a partir do Golpe do falso PIX (solo +1% a +10%; em equipe +10% a +25%). Cai 1% a cada 3 minutos sozinho (o dobro na quinta).",
         `Acima de ${SUSPEITA_BATIDA}%: cada lavagem pode sofrer batida fiscal — perde 20% a 40% do sujo e da fila, e a fachada fecha por 2h.`,
         `Acima de ${SUSPEITA_PRISAO}%: além da batida, você pode ser preso.`,
         `Reduzem o alerta: contadores na gangue (você tem ${contadores(save).length}), o item raro Livro-caixa duplo e um advogado (${reais(CUSTO_ADVOGADO)} por ${DIAS_ADVOGADO} dias, na Delegacia do Hub).`,
@@ -102,7 +102,7 @@ export function PopupInfoTopo({ tipo, save, aoFechar }: { tipo: InfoTopo; save: 
       titulo: "🌀 Vício",
       valor: `${p.vicio}/100`,
       linhas: [
-        "Sobe ao consumir bebidas, drogas e garotas. Cai 1 ponto a cada 10 minutos, ou na desintoxicação do Hospital.",
+        "Sobe ao consumir bebidas, drogas e garotas. Cai 1 ponto a cada 4 minutos (o dobro na quinta), ou na desintoxicação do Hospital.",
         `De ${VICIO_PERIGO} a 100, cada consumo pode dar overdose: 10 min internado, R$ 1.000 de taxa, −20 de respeito e −2% de força, resistência, carisma e intelecto.`,
       ],
     },

@@ -48,6 +48,11 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.8.0
+
+- Regeneração mais rápida: energia +1/min, vida +1 a cada 2 min, vício −1 a cada 4 min, alerta da Federal −1% a cada 3 min, lealdade dos bandidos −1 a cada 4h. Na quinta (Regeneração 2x) tudo isso vale na metade do tempo.
+- Roubos chamam a atenção da Federal: solo a partir do Golpe do falso PIX (+1%) até +10% no mais pesado; em equipe de +10% na primeira missão até +25% na última. A chance de sucesso não mudou. O valor aparece no cartão de cada roubo (🚨).
+
 ## v1.7.0
 
 - Extorsões: a explicação (poder, acúmulo de 12h, chance de flagrante) foi para o botão "?" ao lado do título.

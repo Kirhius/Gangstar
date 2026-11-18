@@ -9,6 +9,8 @@ import {
   CLASSES_BANDIDO,
   VIDA_ROUBO_EQUIPE,
   vidaDoRoubo,
+  alertaDoRoubo,
+  alertaDaMissao,
   exigenciasMissao,
   poderEquipe,
   type ClasseBandido,
@@ -131,7 +133,7 @@ export function Roubos({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
                 <span className="gs-card-sub">
                   {bloqueado
                     ? `Nível ${r.nivelMin} necessário`
-                    : `⚡${r.energiaCusto} · ${vidaDoRoubo(r.id) ? `❤️-${vidaDoRoubo(r.id)} · ` : ""}${formatarDinheiro(r.dinheiroMin)}–${formatarDinheiro(r.dinheiroMax)} · ${chance}% de sucesso`}
+                    : `⚡${r.energiaCusto} · ${vidaDoRoubo(r.id) ? `❤️-${vidaDoRoubo(r.id)} · ` : ""}${alertaDoRoubo(r.id) ? `🚨+${alertaDoRoubo(r.id)}% · ` : ""}${formatarDinheiro(r.dinheiroMin)}–${formatarDinheiro(r.dinheiroMax)} · ${chance}% de sucesso`}
                 </span>
               </div>
               {!bloqueado && (
@@ -160,7 +162,7 @@ export function Roubos({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
                   <span className="gs-card-sub">
                     {bloqueado
                       ? `Nível ${m.nivelMin} necessário`
-                      : `⚡${m.energiaCusto} · ❤️-${VIDA_ROUBO_EQUIPE} · ${formatarDinheiro(m.dinheiroMin)}–${formatarDinheiro(m.dinheiroMax)} · requer ${exigenciasMissao(m)
+                      : `⚡${m.energiaCusto} · ❤️-${VIDA_ROUBO_EQUIPE} · 🚨+${alertaDaMissao(m.id)}% · ${formatarDinheiro(m.dinheiroMin)}–${formatarDinheiro(m.dinheiroMax)} · requer ${exigenciasMissao(m)
                           .map((c) => classeBandido(c).emoji)
                           .join(" ")}`}
                   </span>
