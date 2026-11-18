@@ -167,6 +167,8 @@ export interface GangstarSave {
   suspeita?: { valor: number; em: number };
   advogadoAte?: number;
   lavagemResto?: number;
+  // lavanderia do Hub (lavagem na hora): quanto ja lavou hoje
+  lavanderia?: { dia: string; lavado: number };
   ultimaTemporada?: { mes: string; posicao: number; titulo: string | null; respeito: number; visto: boolean };
   // centavos de juros do banco que ainda nao viraram real (o jogo atualiza a cada 10s)
   jurosResto?: number;
@@ -4718,4 +4720,75 @@ function perderAtributosInternacao(a: Personagem["atributos"]): Personagem["atri
     if (typeof novo[k] === "number") novo[k] = Math.max(1, novo[k] - Math.ceil(novo[k] * PERDA_ATRIBUTOS_INTERNACAO));
   }
   return novo;
+}
+
+
+// =====================================================================
+// v1.4: Lavanderia do Hub. Lava na hora, sem precisar de predio, mas cobra caro
+// (40%), tem limite por dia (cresce com o nivel) e chama mais a atencao da Federal.
+// =====================================================================
+
+export const TAXA_LAVANDERIA = 0.4;
+
+export function limiteLavanderia(save: GangstarSave): number {
+  return 5000 + Math.max(0, save.personagem.nivel - 1) * 2500;
+}
+
+function diaHoje(agora = Date.now()): string {
+  const d = new Date(agora);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function lavadoHojeLavanderia(save: GangstarSave): number {
+  return save.lavanderia?.dia === diaHoje() ? save.lavanderia.lavado : 0;
+}
+
+export function restanteLavanderia(save: GangstarSave): number {
+  return Math.max(0, limiteLavanderia(save) - lavadoHojeLavanderia(save));
+}
+
+// valor null = o maximo possivel (todo o sujo, ate o limite do dia)
+export function lavarNaLavanderia(
+  save: GangstarSave,
+  valor: number | null,
+): { save: GangstarSave; erro?: string; valor?: number; limpo?: number; batida?: { perdeu: number; preso: boolean } } {
+  const p = save.personagem;
+  if (p.preso) return { save, erro: msgBloqueado(p) };
+  const resta = restanteLavanderia(save);
+  if (resta <= 0) return { save, erro: "Limite de hoje atingido. A Lavanderia reabre amanhã." };
+  if (sujo(p) <= 0) return { save, erro: "Você não tem dinheiro sujo." };
+  const v = valor === null ? Math.min(sujo(p), resta) : Math.floor(valor);
+  if (v <= 0) return { save, erro: "Valor inválido." };
+  if (v > sujo(p)) return { save, erro: "Você não tem tanto dinheiro sujo." };
+  if (v > resta) return { save, erro: `Hoje você ainda pode lavar no máximo R$ ${resta.toLocaleString("pt-BR")}.` };
+
+  const agora = Date.now();
+  // chama o dobro da atencao de uma fachada: +1% a cada R$ 2.500
+  const depois = Math.min(100, suspeitaAtual(save, agora) + (v / 2500) * fatorSuspeita(save));
+  const limpo = Math.floor(v * (1 - TAXA_LAVANDERIA));
+  let novo: GangstarSave = contar(
+    {
+      ...save,
+      personagem: { ...p, dinheiroSujo: sujo(p) - v, dinheiro: p.dinheiro + limpo },
+      lavanderia: { dia: diaHoje(agora), lavado: lavadoHojeLavanderia(save) + v },
+      suspeita: { valor: depois, em: agora },
+    },
+    "lavado",
+    v,
+  );
+
+  // batida fiscal (mesma regra das fachadas)
+  if (depois > SUSPEITA_BATIDA && Math.random() < Math.min(0.4, (depois - SUSPEITA_BATIDA) / 100 + 0.05)) {
+    const np = novo.personagem;
+    const perdeu = Math.round(sujo(np) * (0.2 + Math.random() * 0.2));
+    let pessoa: Personagem = { ...np, dinheiroSujo: sujo(np) - perdeu };
+    let preso = false;
+    if (depois > SUSPEITA_PRISAO && Math.random() < 0.35) {
+      preso = true;
+      pessoa = { ...pessoa, preso: { ate: agora + 30 * 60000 }, vezesPreso: pessoa.vezesPreso + 1, respeito: Math.max(0, pessoa.respeito - RESPEITO_PERDIDO_PRISAO) };
+    }
+    novo = contar({ ...novo, personagem: pessoa, suspeita: { valor: Math.max(0, depois - 30), em: agora } }, "batidasFiscais");
+    return { save: novo, valor: v, limpo, batida: { perdeu, preso } };
+  }
+  return { save: novo, valor: v, limpo };
 }

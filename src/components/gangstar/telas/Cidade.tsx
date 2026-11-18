@@ -38,6 +38,7 @@ import { MercadorPainel } from "../MercadorPainel";
 import { Cassino } from "./Cassino";
 import { BoateMenu } from "../BoateMenu";
 import { Bolsa } from "./Bolsa";
+import { Lavanderia } from "./Lavanderia";
 import { gravarNav, lerNav } from "../navegacao";
 import { TituloComAjuda } from "../TituloComAjuda";
 import { IlustracaoAcademia, IlustracaoEscola } from "../IlustracaoServico";
@@ -53,7 +54,7 @@ function tempoRestante(ate: number): string {
   return `${min}m ${seg}s`;
 }
 
-type Visao = "hub" | "mercado" | "hospital" | "banco" | "escola" | "academia" | "boates" | "policia" | "cassino" | "bolsa";
+type Visao = "hub" | "mercado" | "hospital" | "banco" | "escola" | "academia" | "boates" | "policia" | "cassino" | "bolsa" | "lavanderia";
 
 type ResultadoPopup = { sucesso: boolean; titulo: string; linhas: string[] };
 
@@ -134,6 +135,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
       policia: "🚔 Delegacia",
       cassino: "🎰 Cassino",
       bolsa: "📈 Bolsa de Valores",
+      lavanderia: "🧺 Lavanderia",
     };
     const blocoTreino = (local: LocalTreino) => {
       const restam = restantes[local];
@@ -378,6 +380,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
         )}
 
         {visao === "bolsa" && <Bolsa save={save} aoAtualizar={aoAtualizar} />}
+        {visao === "lavanderia" && <Lavanderia save={save} aoAtualizar={aoAtualizar} />}
 
         {visao === "boates" && (
           <div className="gs-lista">
@@ -486,6 +489,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
           { id: "escola" as const, emoji: "🎓", nome: "Escola", sub: `Treine intelecto (${restantes.escola}/5 hoje)` },
           { id: "academia" as const, emoji: "🏋️", nome: "Academia", sub: `Treine força (${restantes.academia}/5 hoje)` },
           { id: "policia" as const, emoji: "🚔", nome: "Delegacia", sub: "Fiança e motim" },
+          { id: "lavanderia" as const, emoji: "🧺", nome: "Lavanderia", sub: "Lave dinheiro sujo na hora (40%)" },
           { id: "bolsa" as const, emoji: "📈", nome: "Bolsa de Valores", sub: p.nivel >= NIVEL_BOLSA ? "Compre e venda ações" : `Libera no nível ${NIVEL_BOLSA}` },
         ].map((loc) => (
           <button key={loc.id} className="gs-card gs-card-clicavel" onClick={() => setVisao(loc.id)}>

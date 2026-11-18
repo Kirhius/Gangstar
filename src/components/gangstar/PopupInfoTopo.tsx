@@ -49,7 +49,7 @@ export function PopupInfoTopo({ tipo, save, aoFechar }: { tipo: InfoTopo; save: 
       linhas: [
         "Vem do crime: roubos solo e em equipe, extorsões, emboscadas, capo, PvP e vendas ao Mercador.",
         "Paga Mercado Negro, Mercador, fiança, agiota, bandidos e a boate do Hub (o sujo sai primeiro).",
-        "Para virar limpo, lave nas suas fachadas (Boate, Hotel e lojas): toque no prédio e use “Lavar dinheiro”.",
+        "Para virar limpo: na Lavanderia do Hub (na hora, mas fica com 40% e tem limite por dia) ou nas suas fachadas (Boate, Hotel e lojas, mais baratas e sem limite): toque no prédio e use “Lavar dinheiro”.",
         `Na lavagem agora: ${reais(totalNaLavagem(save))}${horasParaLavar(save) > 0 ? ` (pronto em ~${Math.ceil(horasParaLavar(save) * 60)} min)` : ""}.`,
         "Cuidado: em emboscadas de outros jogadores, o dinheiro sujo é o primeiro a ser levado (20%).",
       ],

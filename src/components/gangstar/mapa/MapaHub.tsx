@@ -9,7 +9,7 @@ import { useState, type ReactNode } from "react";
 import { CamadaPeriodo } from "./periodo";
 import { BotaoOlho, TagsMapa } from "./TagsMapa";
 
-export type LocalHub = "hospital" | "banco" | "academia" | "escola" | "policia" | "mercado" | "boates" | "bolsa";
+export type LocalHub = "hospital" | "banco" | "academia" | "escola" | "policia" | "mercado" | "boates" | "bolsa" | "lavanderia";
 
 const W = 976;
 const H = 1089;
@@ -21,6 +21,8 @@ const ALVOS: { id: LocalHub; nome: string; poligono: [number, number][] }[] = [
   { id: "escola", nome: "Escola", poligono: [[162, 385], [275, 326], [365, 378], [365, 510], [290, 550], [225, 545], [162, 440]] },
   { id: "academia", nome: "Academia", poligono: [[18, 460], [120, 405], [222, 455], [222, 600], [140, 650], [18, 600]] },
   // v4.63: o predio de vidro da esquina (4o a partir do canto inferior esquerdo)
+  // v1.4: o pavilhao de vidro isolado no meio, entre o Hospital e o Banco
+  { id: "lavanderia", nome: "Lavanderia", poligono: [[465, 265], [575, 228], [690, 262], [690, 345], [640, 390], [560, 400], [480, 385], [465, 330]] },
   { id: "bolsa", nome: "Bolsa de Valores", poligono: [[445, 535], [520, 478], [600, 505], [645, 535], [645, 660], [600, 690], [540, 700], [495, 690], [445, 645]] },
   { id: "mercado", nome: "Mercado Negro", poligono: [[750, 375], [855, 318], [965, 370], [965, 500], [870, 570], [750, 510]] },
   {
