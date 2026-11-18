@@ -143,7 +143,7 @@ export function Gangue({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
                   <strong>{z.zona.nome}</strong>
                   <span className="gs-card-sub">
                     {z.ehJogador
-                      ? `Sua zona · ${z.zona.bonusTipo === "desconto-mercado" ? "desconto no mercado negro" : "produção extra"} +${Math.round(z.zona.bonusValor * 100)}%`
+                      ? `Sua zona · ${z.zona.bonusTipo === "desconto-mercado" ? "desconto no comércio de armas" : "produção extra"} +${Math.round(z.zona.bonusValor * 100)}%`
                       : `${z.donoNome} · força ${z.forcaDefesa}`}
                   </span>
                 </div>

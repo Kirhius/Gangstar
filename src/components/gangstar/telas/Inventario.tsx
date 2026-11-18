@@ -82,7 +82,7 @@ export function Inventario({ save, aoAtualizar }: { save: GangstarSave; aoAtuali
                     </strong>
                     {item.raridade && (
                       <span className={`gs-card-sub ${durabilidadeItem(save, item.id) <= 0 ? "gs-risco" : ""}`}>
-                        🔧 {durabilidadeItem(save, item.id)}/{durabilidadeMax(item)} usos{durabilidadeItem(save, item.id) <= 0 ? " — quebrado (conserte no Mercado Negro)" : ""}
+                        🔧 {durabilidadeItem(save, item.id)}/{durabilidadeMax(item)} usos{durabilidadeItem(save, item.id) <= 0 ? " — quebrado (conserte no Comércio de armas)" : ""}
                       </span>
                     )}
                     <span className="gs-card-sub">

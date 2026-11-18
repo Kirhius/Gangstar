@@ -126,7 +126,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
 
   if (visao !== "hub") {
     const titulos: Record<Exclude<Visao, "hub">, string> = {
-      mercado: "🔫 Mercado Negro",
+      mercado: "🔫 Comércio de armas",
       hospital: "🏥 Hospital",
       banco: "🏦 Banco",
       escola: "🎓 Escola",
@@ -482,7 +482,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
 
       <div className="gs-lista">
         {[
-          { id: "mercado" as const, emoji: "🔫", nome: "Mercado Negro", sub: "Armas e conserto de itens raros" },
+          { id: "mercado" as const, emoji: "🔫", nome: "Comércio de armas", sub: "Armas e conserto de itens raros" },
           { id: "hospital" as const, emoji: "🏥", nome: "Hospital", sub: "Cure sua vida" },
           { id: "boates" as const, emoji: "🪩", nome: "Boates", sub: "Recupere energia" },
           { id: "banco" as const, emoji: "🏦", nome: "Banco", sub: "Guarde dinheiro no CDI" },

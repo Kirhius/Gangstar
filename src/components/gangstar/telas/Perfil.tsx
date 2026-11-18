@@ -118,7 +118,7 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
             </button>
           )}
           {escolhendo === "especial" && opcoesEspecial.length === 0 && (
-            <p className="gs-dica">Nenhum item raro. Eles só caem nos roubos em equipe (15% de chance a cada sucesso). Gastam 1 de durabilidade por ação e quebrados não dão bônus: conserte no Mercado Negro.</p>
+            <p className="gs-dica">Nenhum item raro. Eles só caem nos roubos em equipe (15% de chance a cada sucesso). Gastam 1 de durabilidade por ação e quebrados não dão bônus: conserte no Comércio de armas.</p>
           )}
           {escolhendo === "especial" &&
             opcoesEspecial.map((o) => (
@@ -139,7 +139,7 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
             ))}
           {escolhendo !== "especial" && (escolhendo === "arma" ? opcoesArma : opcoesColete).length === 0 && (
             <p className="gs-dica">
-              Nenhum{escolhendo === "arma" ? "a arma" : " colete"} disponível. {escolhendo === "arma" ? "Compre no Mercado Negro ou fabrique na Fábrica de Armas." : "Fabrique na Fábrica de Armas (nível 2+)."}
+              Nenhum{escolhendo === "arma" ? "a arma" : " colete"} disponível. {escolhendo === "arma" ? "Compre no Comércio de armas ou fabrique na Fábrica de Armas." : "Fabrique na Fábrica de Armas (nível 2+)."}
             </p>
           )}
           {escolhendo === "arma" &&
@@ -148,7 +148,7 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
                 <span className="gs-card-emoji">{o.emoji}</span>
                 <div className="gs-card-corpo">
                   <strong>{o.nome}</strong>
-                  <span className="gs-card-sub">+{o.poder} poder · {o.origem === "mercado" ? "Mercado Negro" : "Fábrica"}</span>
+                  <span className="gs-card-sub">+{o.poder} poder · {o.origem === "mercado" ? "Comércio de armas" : "Fábrica"}</span>
                 </div>
               </button>
             ))}

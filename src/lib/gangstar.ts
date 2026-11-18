@@ -264,7 +264,7 @@ export const CLASSES: Record<ClasseId, { nome: string; emoji: string; descricao:
   assaltante: { nome: "Assaltante", emoji: "🔪", descricao: "+15% na grana dos roubos solo." },
   empresario: { nome: "Empresário", emoji: "💼", descricao: "-10% no preço dos terrenos da cidade." },
   matador: { nome: "Matador", emoji: "🎯", descricao: "+15% de poder nos roubos." },
-  traficante: { nome: "Traficante", emoji: "💊", descricao: "-10% no preço das armas do mercado negro." },
+  traficante: { nome: "Traficante", emoji: "💊", descricao: "-10% no preço das armas do comércio de armas." },
 };
 
 // ---------- Armas (mercado negro) ----------
@@ -476,7 +476,7 @@ export interface GangueRivalDef {
 
 export const ESTILOS_GANGUE: Record<EstiloGangue, { nome: string; emoji: string; descricao: string }> = {
   agressiva: { nome: "Agressiva", emoji: "💥", descricao: "Ataca seu território com mais frequência." },
-  economica: { nome: "Econômica", emoji: "💰", descricao: "Foca em dominar o mercado negro." },
+  economica: { nome: "Econômica", emoji: "💰", descricao: "Foca em dominar o comércio de armas." },
   discreta: { nome: "Discreta", emoji: "🕵️", descricao: "Raramente ataca, mas é difícil de tomar território dela." },
 };
 
