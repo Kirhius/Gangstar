@@ -2,6 +2,7 @@
 
 // Gangstar: aba "Extorsões" (rodapé). Domine estabelecimentos com o seu poder e eles
 // passam a pagar proteção por hora; cada coleta tem risco de flagrante.
+// v1.5: mapa do bairro com os estabelecimentos clicaveis (a lista continua embaixo).
 
 import { useState } from "react";
 import {
@@ -15,6 +16,7 @@ import {
   poderDeRoubo,
 } from "@/lib/gangstar";
 import { PopupResultado, type ResultadoPopup } from "../PopupResultado";
+import { MapaExtorsoes, type EstadoAlvoExtorsao } from "../mapa/MapaExtorsoes";
 
 function formatarDinheiro(v: number): string {
   return `R$ ${v.toLocaleString("pt-BR")}`;
@@ -23,12 +25,14 @@ function formatarDinheiro(v: number): string {
 export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar: (s: GangstarSave) => void }) {
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ResultadoPopup | null>(null);
+  const [aberto, setAberto] = useState<string | null>(null);
   const p = save.personagem;
   const poder = poderDeRoubo(save);
 
   const conquistar = (id: string) => {
     const def = EXTORSOES.find((e) => e.id === id);
     const r = conquistarExtorsao(save, id);
+    setAberto(null);
     if (r.erro) return setMensagem(`⚠️ ${r.erro}`);
     aoAtualizar(r.save);
     setMensagem(null);
@@ -38,6 +42,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
   const coletar = (id: string) => {
     const def = EXTORSOES.find((e) => e.id === id);
     const r = coletarExtorsao(save, id);
+    setAberto(null);
     if (r.erro) return setMensagem(`⚠️ ${r.erro}`);
     aoAtualizar(r.save);
     setMensagem(null);
@@ -52,6 +57,16 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
     }
   };
 
+  const estados: Record<string, EstadoAlvoExtorsao> = {};
+  for (const e of EXTORSOES) {
+    const meu = !!save.extorsoes[e.id];
+    estados[e.id] = { nome: e.nome, meu, bloqueado: poder < e.poderMin, pendente: meu && extorsaoPendente(save, e.id) > 0 };
+  }
+  const def = aberto ? EXTORSOES.find((e) => e.id === aberto) : undefined;
+  const defMeu = def ? !!save.extorsoes[def.id] : false;
+  const defPendente = def ? extorsaoPendente(save, def.id) : 0;
+  const defFraco = def ? poder < def.poderMin : false;
+
   return (
     <div className="gs-pagina">
       <h2 className="gs-h2">💼 Extorsões</h2>
@@ -60,6 +75,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
         {Math.round(chancePrisaoExtorsao(save) * 100)}% de chance de flagrante: você perde o valor, é preso e perde 100 de respeito. Cada coleta ou conquista custa ❤️1.
       </p>
       {mensagem && <div className="gs-aviso">{mensagem}</div>}
+      <MapaExtorsoes estados={estados} onLocal={setAberto} />
       <div className="gs-lista">
         {EXTORSOES.map((e) => {
           const meu = !!save.extorsoes[e.id];
@@ -89,6 +105,50 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
           );
         })}
       </div>
+      {def && (
+        <div className="gs-popup-fundo" onClick={() => setAberto(null)}>
+          <div className="gs-popup-painel" onClick={(ev) => ev.stopPropagation()}>
+            <div className="gs-popup-topo">
+              <h3 className="gs-h3" style={{ margin: 0 }}>
+                {def.emoji} {def.nome}
+              </h3>
+              <button className="gs-popup-fechar" onClick={() => setAberto(null)} aria-label="Fechar">
+                ✕
+              </button>
+            </div>
+            <div className="gs-resultado-linhas">
+              {defMeu ? (
+                <>
+                  <p className="gs-resultado-linha">✅ Território seu. Paga {formatarDinheiro(def.rendaPorHora)}/h (acumula até 12h).</p>
+                  <p className="gs-resultado-linha">Acumulado: <strong>{formatarDinheiro(defPendente)}</strong></p>
+                  <p className="gs-resultado-linha">Chance de flagrante na coleta: {Math.round(chancePrisaoExtorsao(save) * 100)}% · ❤️1</p>
+                </>
+              ) : (
+                <>
+                  <p className="gs-resultado-linha">
+                    Poder necessário: <strong>{def.poderMin}</strong> (o seu: {poder}){defFraco ? " 🔒" : ""}
+                  </p>
+                  <p className="gs-resultado-linha">Rende {formatarDinheiro(def.rendaPorHora)}/h depois de dominado.</p>
+                  <p className="gs-resultado-linha">Custo: ⚡{energiaConquistaExtorsao()} · ❤️1</p>
+                </>
+              )}
+            </div>
+            {defMeu ? (
+              <button className="gs-btn gs-btn-principal gs-btn-bloco" disabled={defPendente <= 0 || !!p.preso} onClick={() => coletar(def.id)}>
+                💰 Coletar {formatarDinheiro(defPendente)}
+              </button>
+            ) : (
+              <button
+                className="gs-btn gs-btn-principal gs-btn-bloco"
+                disabled={defFraco || !!p.preso || p.energia < energiaConquistaExtorsao()}
+                onClick={() => conquistar(def.id)}
+              >
+                {defFraco ? "🔒 Poder insuficiente" : "👊 Dominar"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       <PopupResultado resultado={resultado} aoFechar={() => setResultado(null)} />
     </div>
   );

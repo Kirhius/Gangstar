@@ -2230,11 +2230,18 @@ export const EXTORSOES: ExtorsaoDef[] = [
   { id: "bar", nome: "Bar do Zé", emoji: "🍺", poderMin: 145, rendaPorHora: 260 },
   { id: "posto", nome: "Posto de gasolina", emoji: "⛽", poderMin: 185, rendaPorHora: 360 },
   { id: "cambio", nome: "Casa de câmbio", emoji: "💱", poderMin: 230, rendaPorHora: 500 },
-  { id: "cassino", nome: "Cassino clandestino", emoji: "🎰", poderMin: 290, rendaPorHora: 720 },
+  { id: "cassino", nome: "Cassino", emoji: "🎰", poderMin: 290, rendaPorHora: 720 },
 ];
 
 // v4.60: extorsoes mais dificeis (poder minimo +20%)
 for (const e of EXTORSOES) e.poderMin = Math.round(e.poderMin * 1.2);
+
+// v1.5: acougue e supermercado (valores ja finais, fora do +20%); lista em ordem de poder
+EXTORSOES.push(
+  { id: "acougue", nome: "Açougue", emoji: "🥩", poderMin: 200, rendaPorHora: 310 },
+  { id: "supermercado", nome: "Supermercado", emoji: "🛒", poderMin: 310, rendaPorHora: 620 },
+);
+EXTORSOES.sort((a, b) => a.poderMin - b.poderMin);
 
 const ENERGIA_CONQUISTA = 25;
 const ESTOQUE_MAX_HORAS_EXTORSAO = 12;

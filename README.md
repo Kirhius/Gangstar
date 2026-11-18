@@ -48,6 +48,12 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.5.0
+
+- Extorsões ganham um mapa ilustrado do bairro: toque no estabelecimento para ver poder, renda e dominar ou coletar. Os seus ficam com contorno verde e moeda quando há dinheiro; os que pedem mais poder mostram cadeado. A lista continua embaixo.
+- Novos: Açougue (poder 200, R$ 310/h) e Supermercado (poder 310, R$ 620/h), ambos ⚡25.
+- "Cassino clandestino" agora se chama Cassino.
+
 ## v1.4.1
 
 - **Topo:** caixas de dinheiro (limpo e sujo) um pouco menores e a coluna de vida/poder maior — "100/100" não corta mais, nem em telas de 360 px.

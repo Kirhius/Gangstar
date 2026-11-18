@@ -636,3 +636,7 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-stats-topo { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.95fr); gap: 4px; }
 .gs-stat-chip { gap: 2px; padding: 0 3px; }
 .gs-stat-chip strong { font-size: 10.5px; letter-spacing: -0.2px; }
+
+/* v1.5: mapa das extorsoes - estabelecimentos dominados ficam com contorno verde */
+.gs-mapa-alvo-dominado { stroke: rgba(125, 232, 163, 0.55); stroke-width: 4; }
+.gs-mapa-alvo-dominado:hover, .gs-mapa-alvo-dominado:focus-visible { fill: rgba(125, 232, 163, 0.12); stroke: rgba(125, 232, 163, 0.9); }
