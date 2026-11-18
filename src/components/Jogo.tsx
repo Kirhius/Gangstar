@@ -28,7 +28,7 @@ const FRASES = [
   "Na Bolsa ou no beco, o jogo é o mesmo: comprar barato.",
 ];
 
-const TEMPO_MINIMO = 1600;
+const TEMPO_MINIMO = 2000;
 
 export function Jogo() {
   const [pronto, setPronto] = useState(false);

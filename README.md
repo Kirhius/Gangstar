@@ -48,6 +48,12 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.9.0
+
+- Tela de carregamento dura 2 segundos.
+- Extorsões: chance de flagrante na coleta caiu para no máximo 10% (menos com resistência e itens); dominar sobe o alerta da Federal em 10% e cada coleta em 5%.
+- Perfil: barra de XP acima da vida, com o progresso até o próximo nível.
+
 ## v1.8.0
 
 - Regeneração mais rápida: energia +1/min, vida +1 a cada 2 min, vício −1 a cada 4 min, alerta da Federal −1% a cada 3 min, lealdade dos bandidos −1 a cada 4h. Na quinta (Regeneração 2x) tudo isso vale na metade do tempo.

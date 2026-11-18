@@ -6,6 +6,8 @@
 
 import { useState } from "react";
 import {
+  ALERTA_COLETA_EXTORSAO,
+  ALERTA_DOMINAR_EXTORSAO,
   EXTORSOES,
   GangstarSave,
   chancePrisaoExtorsao,
@@ -75,7 +77,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
         ajuda={
           <p>
             Seu poder: <strong>{poder}</strong>. Domine estabelecimentos e eles pagam proteção por hora (acumula até 12h). Cada coleta tem{" "}
-            {Math.round(chancePrisaoExtorsao(save) * 100)}% de chance de flagrante: você perde o valor, é preso e perde 100 de respeito. Cada coleta ou conquista custa ❤️1.
+            {Math.round(chancePrisaoExtorsao(save) * 100)}% de chance de flagrante: você perde o valor, é preso e perde 100 de respeito. Cada coleta ou conquista custa ❤️1. A Federal fica de olho: dominar sobe o alerta em {ALERTA_DOMINAR_EXTORSAO}% e cada coleta em {ALERTA_COLETA_EXTORSAO}%.
           </p>
         }
       />
@@ -94,7 +96,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
                 <span className="gs-card-sub">
                   {meu
                     ? `${formatarDinheiro(e.rendaPorHora)}/h · acumulado ${formatarDinheiro(pendente)}`
-                    : `Poder ${e.poderMin} · rende ${formatarDinheiro(e.rendaPorHora)}/h · ⚡${energiaConquistaExtorsao()}`}
+                    : `Poder ${e.poderMin} · rende ${formatarDinheiro(e.rendaPorHora)}/h · ⚡${energiaConquistaExtorsao()} · 🚨+${ALERTA_DOMINAR_EXTORSAO}%`}
                 </span>
               </div>
               {meu ? (
@@ -126,7 +128,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
                 <>
                   <p className="gs-resultado-linha">✅ Território seu. Paga {formatarDinheiro(def.rendaPorHora)}/h (acumula até 12h).</p>
                   <p className="gs-resultado-linha">Acumulado: <strong>{formatarDinheiro(defPendente)}</strong></p>
-                  <p className="gs-resultado-linha">Chance de flagrante na coleta: {Math.round(chancePrisaoExtorsao(save) * 100)}% · ❤️1</p>
+                  <p className="gs-resultado-linha">Chance de flagrante na coleta: {Math.round(chancePrisaoExtorsao(save) * 100)}% · ❤️1 · 🚨+{ALERTA_COLETA_EXTORSAO}%</p>
                 </>
               ) : (
                 <>
@@ -134,7 +136,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
                     Poder necessário: <strong>{def.poderMin}</strong> (o seu: {poder}){defFraco ? " 🔒" : ""}
                   </p>
                   <p className="gs-resultado-linha">Rende {formatarDinheiro(def.rendaPorHora)}/h depois de dominado.</p>
-                  <p className="gs-resultado-linha">Custo: ⚡{energiaConquistaExtorsao()} · ❤️1</p>
+                  <p className="gs-resultado-linha">Custo: ⚡{energiaConquistaExtorsao()} · ❤️1 · 🚨+{ALERTA_DOMINAR_EXTORSAO}%</p>
                 </>
               )}
             </div>

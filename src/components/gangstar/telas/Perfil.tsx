@@ -43,7 +43,7 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
     setEscolhendo(null);
   };
   const classe = CLASSES[p.classe];
-  const { proximo, faltam } = proximoNivelInfo(p);
+  const { atual, proximo, faltam } = proximoNivelInfo(p);
 
   return (
     <div className="gs-pagina">
@@ -55,6 +55,11 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
         {proximo !== null && <> · faltam {faltam} xp</>}
       </p>
 
+      <div className="gs-stat">
+        <span>⭐ XP</span>
+        <Barra valor={proximo === null ? 1 : Math.max(0, p.xp - atual)} max={proximo === null ? 1 : proximo - atual} cor="#8a6cff" />
+        <span>{proximo === null ? "MÁX" : `${Math.max(0, p.xp - atual)}/${proximo - atual}`}</span>
+      </div>
       <div className="gs-stat">
         <span>❤️ Vida</span>
         <Barra valor={p.vida} max={p.vidaMax} cor="#ff4d6d" />

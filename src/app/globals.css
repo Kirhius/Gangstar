@@ -548,7 +548,7 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-splash-frase { margin: 0; font-family: "Special Elite", "Courier New", monospace; font-size: 18px; line-height: 1.5; color: #f4e9ff; text-shadow: 0 0 12px rgba(255, 79, 216, 0.35); animation: gs-splash-frase 0.8s ease-out 0.2s both; }
 @keyframes gs-splash-frase { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .gs-splash-barra { width: 70%; height: 8px; border-radius: 4px; background: #1a0f2e; border: 1px solid #3a2a52; overflow: hidden; }
-.gs-splash-barra > div { height: 100%; background: linear-gradient(90deg, #ff4fd8, #ffb020); animation: gs-splash-barra 1.5s ease-in-out both; }
+.gs-splash-barra > div { height: 100%; background: linear-gradient(90deg, #ff4fd8, #ffb020); animation: gs-splash-barra 1.9s ease-in-out both; }
 @keyframes gs-splash-barra { from { width: 0; } to { width: 100%; } }
 .gs-splash small { font-family: "Press Start 2P", monospace; font-size: 8px; letter-spacing: 1px; color: #9d8bbd; }
 

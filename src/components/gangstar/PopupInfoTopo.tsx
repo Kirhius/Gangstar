@@ -82,7 +82,7 @@ export function PopupInfoTopo({ tipo, save, aoFechar }: { tipo: InfoTopo; save: 
       titulo: "🚨 Alerta da Polícia Federal",
       valor: `${Math.round(s)}%`,
       linhas: [
-        "Sobe quando você lava muito dinheiro de uma vez (+1% a cada R$ 5.000; em dobro na sexta) e a cada roubo a partir do Golpe do falso PIX (solo +1% a +10%; em equipe +10% a +25%). Cai 1% a cada 3 minutos sozinho (o dobro na quinta).",
+        "Sobe quando você lava muito dinheiro de uma vez (+1% a cada R$ 5.000; em dobro na sexta) e a cada roubo a partir do Golpe do falso PIX (solo +1% a +10%; em equipe +10% a +25%), ao dominar uma extorsão (+10%) e a cada coleta (+5%). Cai 1% a cada 3 minutos sozinho (o dobro na quinta).",
         `Acima de ${SUSPEITA_BATIDA}%: cada lavagem pode sofrer batida fiscal — perde 20% a 40% do sujo e da fila, e a fachada fecha por 2h.`,
         `Acima de ${SUSPEITA_PRISAO}%: além da batida, você pode ser preso.`,
         `Reduzem o alerta: contadores na gangue (você tem ${contadores(save).length}), o item raro Livro-caixa duplo e um advogado (${reais(CUSTO_ADVOGADO)} por ${DIAS_ADVOGADO} dias, na Delegacia do Hub).`,

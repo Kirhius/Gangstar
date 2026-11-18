@@ -2251,7 +2251,7 @@ EXTORSOES.sort((a, b) => a.poderMin - b.poderMin);
 
 const ENERGIA_CONQUISTA = 25;
 const ESTOQUE_MAX_HORAS_EXTORSAO = 12;
-const CHANCE_PRISAO_COLETA = 0.2;
+const CHANCE_PRISAO_COLETA = 0.1; // v1.9: 10% (antes 20%)
 
 export function energiaConquistaExtorsao(): number {
   return ENERGIA_CONQUISTA;
@@ -2267,7 +2267,7 @@ export function extorsaoPendente(save: GangstarSave, id: string): number {
 
 export function chancePrisaoExtorsao(save: GangstarSave): number {
   const reducao = save.personagem.atributos.resistencia * 0.003;
-  return Math.max(0.03, Math.min(0.6, (CHANCE_PRISAO_COLETA - reducao) * fatorPrisaoDoDia() * fatorPiloto(save) * (1 - bonusEspecial(save, "prisao"))));
+  return Math.max(0.03, Math.min(CHANCE_PRISAO_COLETA, (CHANCE_PRISAO_COLETA - reducao) * fatorPrisaoDoDia() * fatorPiloto(save) * (1 - bonusEspecial(save, "prisao"))));
 }
 
 function conquistarExtorsaoBase(save: GangstarSave, id: string): { save: GangstarSave; erro?: string } {
@@ -3034,15 +3034,22 @@ export function coletarExtorsao(save: GangstarSave, id: string) {
   if (ferido) return { save, erro: ferido };
   const r = coletarExtorsaoBase(save, id);
   if (r.erro || !r.resultado) return r;
-  return posAcao(save, { ...r, save: r.resultado.tipo === "coletou" ? contar(r.save, "extorsoesColetadas") : r.save }, VIDA_EXTORSAO);
+  const s1 = somarAlerta(r.save, ALERTA_COLETA_EXTORSAO);
+  return posAcao(save, { ...r, save: r.resultado.tipo === "coletou" ? contar(s1, "extorsoesColetadas") : s1 }, VIDA_EXTORSAO);
 }
 
 export function conquistarExtorsao(save: GangstarSave, id: string): { save: GangstarSave; erro?: string } {
   if (save.personagem.nivel < NIVEL_EXTORSAO) return { save, erro: `Extorsões liberam no nível ${NIVEL_EXTORSAO}.` };
   const ferido = exigeVida(save, VIDA_EXTORSAO);
   if (ferido) return { save, erro: ferido };
-  return posAcao(save, conquistarExtorsaoBase(save, id), VIDA_EXTORSAO);
+  const r = conquistarExtorsaoBase(save, id);
+  if (r.erro) return r;
+  return posAcao(save, { ...r, save: somarAlerta(r.save, ALERTA_DOMINAR_EXTORSAO) }, VIDA_EXTORSAO);
 }
+
+// v1.9: extorsao chama a atencao da Federal: +10% ao dominar, +5% a cada coleta
+export const ALERTA_DOMINAR_EXTORSAO = 10;
+export const ALERTA_COLETA_EXTORSAO = 5;
 
 export function emboscar(save: GangstarSave, alvoId: string, emGrupo = false): { save: GangstarSave; erro?: string; resultado?: ResultadoEmboscada } {
   if (save.personagem.nivel < NIVEL_EMBOSCADA) return { save, erro: `Emboscadas liberam no nível ${NIVEL_EMBOSCADA}.` };
