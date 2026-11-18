@@ -48,6 +48,10 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.4.1
+
+- **Topo:** caixas de dinheiro (limpo e sujo) um pouco menores e a coluna de vida/poder maior — "100/100" não corta mais, nem em telas de 360 px.
+
 ## v1.4.0
 
 - **Lavanderia no Hub:** o pavilhão de vidro no meio, entre o Hospital e o Banco, lava dinheiro sujo **na hora**, sem precisar de prédio — a saída para quem está começando. Fica com 40% de taxa, tem limite por dia (R$ 5.000 no nível 1, +R$ 2.500 por nível) e sobe o alerta da Federal o dobro das fachadas (+1% a cada R$ 2.500). A batida fiscal vale aqui também.

@@ -631,3 +631,8 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-slot-especial-cheio { border-width: 2px !important; border-style: solid !important; }
 
 .gs-sub-abas-bandidos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* v1.4.1: dinheiro um pouco menor e a coluna de vida/poder maior (cabe "100/100") */
+.gs-stats-topo { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.95fr); gap: 4px; }
+.gs-stat-chip { gap: 2px; padding: 0 3px; }
+.gs-stat-chip strong { font-size: 10.5px; letter-spacing: -0.2px; }
