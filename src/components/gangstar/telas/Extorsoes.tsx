@@ -15,6 +15,7 @@ import {
   extorsaoPendente,
   poderDeRoubo,
 } from "@/lib/gangstar";
+import { TituloComAjuda } from "../TituloComAjuda";
 import { PopupResultado, type ResultadoPopup } from "../PopupResultado";
 import { MapaExtorsoes, type EstadoAlvoExtorsao } from "../mapa/MapaExtorsoes";
 
@@ -69,11 +70,15 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
 
   return (
     <div className="gs-pagina">
-      <h2 className="gs-h2">💼 Extorsões</h2>
-      <p className="gs-p-intro">
-        Seu poder: <strong>{poder}</strong>. Domine estabelecimentos e eles pagam proteção por hora (acumula até 12h). Cada coleta tem{" "}
-        {Math.round(chancePrisaoExtorsao(save) * 100)}% de chance de flagrante: você perde o valor, é preso e perde 100 de respeito. Cada coleta ou conquista custa ❤️1.
-      </p>
+      <TituloComAjuda
+        titulo="💼 Extorsões"
+        ajuda={
+          <p>
+            Seu poder: <strong>{poder}</strong>. Domine estabelecimentos e eles pagam proteção por hora (acumula até 12h). Cada coleta tem{" "}
+            {Math.round(chancePrisaoExtorsao(save) * 100)}% de chance de flagrante: você perde o valor, é preso e perde 100 de respeito. Cada coleta ou conquista custa ❤️1.
+          </p>
+        }
+      />
       {mensagem && <div className="gs-aviso">{mensagem}</div>}
       <MapaExtorsoes estados={estados} onLocal={setAberto} />
       <div className="gs-lista">

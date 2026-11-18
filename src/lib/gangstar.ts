@@ -425,8 +425,8 @@ export interface Roubo {
 }
 
 const ROUBOS_BASE: Roubo[] = [
-  { id: "carteira", nome: "Roubar carteira de pedestre", emoji: "👛", nivelMin: 1, energiaCusto: 4, dificuldade: 6, dinheiroMin: 30, dinheiroMax: 70, respeito: 2, xp: 15, chancePrisaoBase: 0.14, prisaoMinutos: 2, fiancaBase: 80 },
-  { id: "celular", nome: "Furtar celular no metrô", emoji: "📱", nivelMin: 1, energiaCusto: 5, dificuldade: 9, dinheiroMin: 45, dinheiroMax: 110, respeito: 3, xp: 20, chancePrisaoBase: 0.16, prisaoMinutos: 3, fiancaBase: 110 },
+  { id: "carteira", nome: "Roubar carteira de pedestre", emoji: "👛", nivelMin: 1, energiaCusto: 2, dificuldade: 6, dinheiroMin: 30, dinheiroMax: 70, respeito: 2, xp: 15, chancePrisaoBase: 0.14, prisaoMinutos: 2, fiancaBase: 80 },
+  { id: "celular", nome: "Furtar bolsa no metrô", emoji: "👜", nivelMin: 1, energiaCusto: 4, dificuldade: 9, dinheiroMin: 45, dinheiroMax: 110, respeito: 3, xp: 20, chancePrisaoBase: 0.16, prisaoMinutos: 3, fiancaBase: 110 },
   { id: "conveniencia", nome: "Furtar loja de conveniência", emoji: "🏪", nivelMin: 1, energiaCusto: 6, dificuldade: 12, dinheiroMin: 70, dinheiroMax: 150, respeito: 4, xp: 25, chancePrisaoBase: 0.18, prisaoMinutos: 4, fiancaBase: 150 },
   { id: "bilhete", nome: "Golpe do bilhete premiado", emoji: "🎟️", nivelMin: 5, energiaCusto: 14, dificuldade: 16, dinheiroMin: 110, dinheiroMax: 240, respeito: 5, xp: 32, chancePrisaoBase: 0.19, prisaoMinutos: 5, fiancaBase: 220 },
   { id: "posto", nome: "Assaltar posto de gasolina", emoji: "⛽", nivelMin: 5, energiaCusto: 16, dificuldade: 19, dinheiroMin: 150, dinheiroMax: 300, respeito: 7, xp: 40, chancePrisaoBase: 0.2, prisaoMinutos: 6, fiancaBase: 280 },

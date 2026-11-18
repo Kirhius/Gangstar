@@ -48,6 +48,12 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.7.0
+
+- Extorsões: a explicação (poder, acúmulo de 12h, chance de flagrante) foi para o botão "?" ao lado do título.
+- Roubos solo: "Roubar carteira de pedestre" gasta ⚡2 (antes 4); "Furtar celular no metrô" virou 👜 "Furtar bolsa no metrô" e gasta ⚡4 (antes 5).
+- Lavanderia do Hub: toda a tela fica dentro de uma ilustração do interior da lavanderia, escurecida para o texto ficar legível.
+
 ## v1.6.0
 
 - Nova arte do Hub da cidade, com os prédios em novas posições: Banco e Hospital no topo, Bolsa de Valores entre eles, Escola e Academia no meio, Delegacia e Comércio de armas embaixo, Lavanderia e Boate na frente.
