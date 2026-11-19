@@ -41,7 +41,7 @@ import { Bolsa } from "./Bolsa";
 import { Lavanderia } from "./Lavanderia";
 import { gravarNav, lerNav } from "../navegacao";
 import { TituloComAjuda } from "../TituloComAjuda";
-import { IlustracaoAcademia, IlustracaoEscola } from "../IlustracaoServico";
+import { IlustracaoAcademia, IlustracaoBanco, IlustracaoBoate, IlustracaoEscola } from "../IlustracaoServico";
 
 function formatarDinheiro(v: number): string {
   return `R$ ${v.toLocaleString("pt-BR")}`;
@@ -271,6 +271,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
 
         {visao === "banco" && (
           <div className="gs-lista">
+            <IlustracaoBanco />
             <div className="gs-card">
               <span className="gs-card-emoji">💰</span>
               <div className="gs-card-corpo">
@@ -384,6 +385,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
 
         {visao === "boates" && (
           <div className="gs-lista">
+            <IlustracaoBoate />
             <p className="gs-p-intro">Escolha a seção. Aqui tudo sai bem mais caro que no mercado — mas é na hora.</p>
             <BoateMenu save={save} aoAtualizar={aoAtualizar} />
             <button className="gs-btn gs-btn-cassino gs-btn-bloco" onClick={() => setVisao("cassino")}>

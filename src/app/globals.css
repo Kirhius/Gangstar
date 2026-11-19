@@ -641,9 +641,3 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-mapa-alvo-dominado { stroke: rgba(125, 232, 163, 0.55); stroke-width: 4; }
 .gs-mapa-alvo-dominado:hover, .gs-mapa-alvo-dominado:focus-visible { fill: rgba(125, 232, 163, 0.12); stroke: rgba(125, 232, 163, 0.9); }
 
-/* v1.7: telas dentro de uma ilustracao escurecida (Lavanderia) */
-.gs-cena { position: relative; border-radius: 12px; border: 2px solid #3a2a52; padding: 16px 14px; overflow: hidden; background-size: cover; background-position: center; }
-.gs-cena > * { position: relative; }
-.gs-cena .gs-p-intro, .gs-cena .gs-dica { color: #f1ecff; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); }
-.gs-cena .gs-loja-resumo, .gs-cena .gs-bolsa-ordem { background: rgba(16, 8, 30, 0.72); border-radius: 10px; padding: 8px; }
-.gs-cena-lavanderia { background-image: linear-gradient(rgba(10, 6, 22, 0.62), rgba(10, 6, 22, 0.74)), url("/gangstar/servicos/lavanderia.webp"); min-height: 360px; }

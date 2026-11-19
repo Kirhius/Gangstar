@@ -2,8 +2,9 @@
 
 // Gangstar: Lavanderia do Hub. Lava dinheiro sujo na hora, sem precisar de predio:
 // taxa de 40%, limite por dia (cresce com o nivel) e o dobro de alerta da Federal.
-// v1.7: tudo dentro da ilustracao do interior da lavanderia (escurecida).
+// v1.9.2: ilustracao em faixa 3:1 no topo; texto e botoes embaixo.
 
+import { IlustracaoLavanderia } from "../IlustracaoServico";
 import { useState } from "react";
 import {
   GangstarSave,
@@ -43,7 +44,8 @@ export function Lavanderia({ save, aoAtualizar }: { save: GangstarSave; aoAtuali
   };
 
   return (
-    <div className="gs-lista gs-cena gs-cena-lavanderia">
+    <div className="gs-lista">
+      <IlustracaoLavanderia />
       <p className="gs-p-intro">
         O dono não faz perguntas: entrega dinheiro limpo na hora, sem você precisar de fachada. Mas fica com {Math.round(TAXA_LAVANDERIA * 100)}%, tem limite por dia e a
         Federal fica de olho (o alerta sobe o dobro das fachadas).

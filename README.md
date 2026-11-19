@@ -48,6 +48,11 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.9.2
+
+- Lavanderia: a ilustração saiu do fundo e virou faixa 3:1 no topo, com o texto e os botões embaixo.
+- Banco e Boate do Hub ganharam ilustração do interior no topo, no mesmo formato 3:1.
+
 ## v1.9.1
 
 - Escola e Academia: a imagem do topo virou uma faixa 3:1, recortada pelo centro.
