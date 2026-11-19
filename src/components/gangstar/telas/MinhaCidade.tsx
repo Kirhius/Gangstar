@@ -44,6 +44,8 @@ import {
   VICIO_PERIGO,
   CATEGORIAS_LOJA,
   abastecerLoja,
+  compradosDoMercador,
+  vendiveisAoMercador,
   clientesPorHora,
   coletarCaixaLoja,
   demandaCategoria,
@@ -516,14 +518,24 @@ function PainelLoja({
                 {p.item.nome} ×{p.qtd}
                 <NotaQualidade q={p.q} />
               </strong>
-              <span className="gs-card-sub">Vende a {formatarDinheiro(precoNaLoja(save, p.chave))}</span>
+              <span className="gs-card-sub">
+                {vendiveisAoMercador(save, p.chave) > 0 ? `Vende a ${formatarDinheiro(precoNaLoja(save, p.chave))}` : "Comprado do Mercador: não vai para a prateleira"}
+                {vendiveisAoMercador(save, p.chave) > 0 && compradosDoMercador(save, p.chave) > 0 ? ` (${compradosDoMercador(save, p.chave)} do Mercador fica fora)` : ""}
+              </span>
             </div>
             <div className="gs-botoes-mini">
-              <button className="gs-btn-mini" onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, 1), `${p.item.emoji} +1 na prateleira.`)}>
+              <button
+                className="gs-btn-mini"
+                disabled={vendiveisAoMercador(save, p.chave) <= 0}
+                onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, 1), `${p.item.emoji} +1 na prateleira.`)}
+              >
                 +1
               </button>
-              {p.qtd > 1 && (
-                <button className="gs-btn-mini" onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, p.qtd), `${p.item.emoji} +${p.qtd} na prateleira.`)}>
+              {vendiveisAoMercador(save, p.chave) > 1 && (
+                <button
+                  className="gs-btn-mini"
+                  onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, p.qtd), `${p.item.emoji} +${vendiveisAoMercador(save, p.chave)} na prateleira.`)}
+                >
                   Todos
                 </button>
               )}

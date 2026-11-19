@@ -6,6 +6,8 @@
 
 import { useState } from "react";
 import {
+  ALERTA_PERIGO,
+  suspeitaAtual,
   CLASSES_BANDIDO,
   VIDA_ROUBO_EQUIPE,
   vidaDoRoubo,
@@ -115,6 +117,9 @@ export function Roubos({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
     <div className="gs-pagina">
       <h2 className="gs-h2">🎯 Roubos</h2>
       <p className="gs-p-intro">Seu poder atual: {poder}</p>
+      {suspeitaAtual(save) > ALERTA_PERIGO && (
+        <div className="gs-aviso">🚨 Alerta da Federal acima de {ALERTA_PERIGO}% ({suspeitaAtual(save)}%): +5% de chance de prisão nos roubos até baixar.</div>
+      )}
 
       {p.preso && <div className="gs-aviso">🚔 Você está preso — vá à aba Cidade para pagar fiança ou esperar.</div>}
       {mensagem && <div className="gs-aviso gs-aviso-msg">{mensagem}</div>}

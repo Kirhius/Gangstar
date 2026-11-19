@@ -13,6 +13,37 @@ export { supabaseConfigurado };
 
 const CHAVE_DONO = "gangstar:dono";
 
+// v1.11: um aparelho por vez. Cada abertura do jogo tem um id proprio; ao entrar, ele e
+// gravado em gs_saves.sessao. Se outro aparelho entrar depois, este para de enviar o save
+// (para um nao apagar o progresso do outro) e mostra um aviso.
+const ID_APARELHO = Math.random().toString(36).slice(2) + Date.now().toString(36);
+let bloqueadoPorOutro = false;
+const ouvintesBloqueio = new Set<(b: boolean) => void>();
+
+export function sessaoEmOutroAparelho(): boolean {
+  return bloqueadoPorOutro;
+}
+
+export function ouvirBloqueio(f: (b: boolean) => void): () => void {
+  ouvintesBloqueio.add(f);
+  return () => ouvintesBloqueio.delete(f);
+}
+
+function marcarBloqueio(b: boolean) {
+  if (bloqueadoPorOutro === b) return;
+  bloqueadoPorOutro = b;
+  ouvintesBloqueio.forEach((f) => f(b));
+}
+
+// "Jogar neste aparelho": toma a sessao de volta e recarrega o save da nuvem
+export async function assumirSessao(): Promise<void> {
+  if (!usuarioAtual) return;
+  await supabase().from("gs_saves").update({ sessao: ID_APARELHO }).eq("id", usuarioAtual);
+  const { data } = await supabase().from("gs_saves").select("save").eq("id", usuarioAtual).maybeSingle();
+  if (data?.save) gangstar.salvar(data.save as GangstarSave);
+  marcarBloqueio(false);
+}
+
 export interface AtaqueRegistro {
   id: string;
   atacante: string;
@@ -74,6 +105,7 @@ export async function criarConta(email: string, senha: string): Promise<{ erro: 
 
 export async function sairDaConta(save: GangstarSave | null): Promise<void> {
   if (save) await salvarNaNuvem(save).catch(() => undefined);
+  marcarBloqueio(false);
   await supabase().auth.signOut();
   // o proximo login (talvez outra conta) nao herda este imperio
   try {
@@ -108,6 +140,8 @@ export async function sincronizarAoEntrar(userId: string): Promise<void> {
   }
   if (data?.save) {
     gangstar.salvar(data.save as GangstarSave);
+    // este aparelho passa a ser o dono da sessao
+    await supabase().from("gs_saves").update({ sessao: ID_APARELHO }).eq("id", userId);
   } else {
     const local = dono && dono !== userId ? null : gangstar.carregar();
     if (dono && dono !== userId) {
@@ -135,11 +169,17 @@ export function usuarioLogado(): string | null {
 }
 
 export async function salvarNaNuvem(save: GangstarSave, userId = usuarioAtual): Promise<void> {
-  if (!userId || !supabaseConfigurado()) return;
+  if (!userId || !supabaseConfigurado() || bloqueadoPorOutro) return;
   const agora = new Date().toISOString();
   const sb = supabase();
+  // outro aparelho assumiu a conta? entao este nao envia nada
+  const { data: dono } = await sb.from("gs_saves").select("sessao").eq("id", userId).maybeSingle();
+  if (dono?.sessao && dono.sessao !== ID_APARELHO) {
+    marcarBloqueio(true);
+    return;
+  }
   await Promise.all([
-    sb.from("gs_saves").upsert({ id: userId, save, versao: Date.now(), atualizado_em: agora }),
+    sb.from("gs_saves").upsert({ id: userId, save, versao: Date.now(), atualizado_em: agora, sessao: ID_APARELHO }),
     sb.from("gs_jogadores").upsert({ id: userId, ...resumoPublico(save), atualizado_em: agora }),
   ]);
 }

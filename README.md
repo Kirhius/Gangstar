@@ -48,6 +48,15 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.11.0
+
+- Brecha fechada: itens comprados do Mercador não vão mais para a prateleira das lojas/boate (era comprar a 75% e vender a 140%).
+- Um aparelho por vez (multiplayer): ao entrar em outro aparelho, o anterior para de salvar na nuvem e mostra o aviso "Conta aberta em outro aparelho", com o botão "Jogar neste aparelho". Precisa rodar de novo o `supabase/schema.sql` (coluna `gs_saves.sessao`).
+- Alerta da Federal acima de 80%: +5% de chance de prisão nos roubos solo e em equipe (aviso na aba Roubos).
+- Missões diárias (aba Missões → DIÁRIAS): 3 tarefas por dia, cada uma dá XP e um item; completando as 3, bônus com o dobro de XP e um item nota A.
+- Histórico de ações no Perfil: as últimas 20 (roubos, equipe, emboscadas, capo, extorsões, lavagens, missões), com ganho ou perda.
+- Ranking semanal de emboscadas: pontos = poder dos alvos de IA vencidos. Na segunda o top 3 ganha título por uma semana (🥇 Terror das Ruas, 🥈 Caçador de Gangsters, 🥉 Tocaieiro), dinheiro sujo (R$ 50 mil / 25 mil / 10 mil) e XP.
+
 ## v1.10.0
 
 - Fábricas: nível, linhas de produção e regras foram para o botão "?" ao lado do título.

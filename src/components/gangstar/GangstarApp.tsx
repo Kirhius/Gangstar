@@ -35,7 +35,7 @@ import { Inventario } from "./telas/Inventario";
 import { Missoes } from "./telas/Missoes";
 import { useConta } from "./conta";
 import { PopupInfoTopo, nivelAlerta, type InfoTopo } from "./PopupInfoTopo";
-import { agendarSync, aplicarAtaque, assinarAtaquesRecebidos, ataquesPendentes, atualizarJogadores, type AtaqueRegistro } from "@/lib/multiplayer";
+import { agendarSync, assumirSessao, ouvirBloqueio, sessaoEmOutroAparelho, aplicarAtaque, assinarAtaquesRecebidos, ataquesPendentes, atualizarJogadores, type AtaqueRegistro } from "@/lib/multiplayer";
 import { gravarNav, lerNav } from "./navegacao";
 
 type Aba = "minha-cidade" | "cidade" | "roubos" | "gangue" | "perfil" | "porto" | "emboscada" | "extorsoes" | "inventario" | "missoes";
@@ -119,6 +119,10 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
     if (conta && save) agendarSync(save);
   }, [conta, save]);
   const [ataquesRecebidos, setAtaquesRecebidos] = useState<AtaqueRegistro[]>([]);
+  // v1.11: a conta foi aberta em outro aparelho (este para de sincronizar)
+  const [outroAparelho, setOutroAparelho] = useState(sessaoEmOutroAparelho());
+  const [assumindo, setAssumindo] = useState(false);
+  useEffect(() => ouvirBloqueio(setOutroAparelho), []);
   const carregou = save !== null;
   useEffect(() => {
     if (!conta || !carregou) return;
@@ -155,6 +159,29 @@ export function GangstarApp({ aoSair }: { aoSair: () => void }) {
 
   return (
     <div className="gs-app">
+      {outroAparelho && (
+        <div className="gs-popup-fundo gs-popup-bloqueio">
+          <div className="gs-popup-painel">
+            <h3 className="gs-h3">📱 Conta aberta em outro aparelho</h3>
+            <p className="gs-p-intro">
+              Você entrou no Gangstar em outro celular ou navegador. Para um aparelho não apagar o progresso do outro, só um joga por vez: este parou de
+              salvar na nuvem.
+            </p>
+            <button
+              className="gs-btn gs-btn-principal gs-btn-bloco"
+              disabled={assumindo}
+              onClick={async () => {
+                setAssumindo(true);
+                await assumirSessao().catch(() => undefined);
+                window.location.reload();
+              }}
+            >
+              {assumindo ? "Carregando…" : "Jogar neste aparelho"}
+            </button>
+            <small className="gs-dica">O progresso feito no outro aparelho é mantido; o deste aparelho que ainda não foi salvo é descartado.</small>
+          </div>
+        </div>
+      )}
       <header className="gs-cabecalho">
         <div className="gs-cabecalho-linha1">
           <button className="gs-nivel-quadro" onClick={() => setAba("perfil")} aria-label={`Nível ${save.personagem.nivel}`} title="Seu nível">

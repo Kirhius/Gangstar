@@ -169,6 +169,14 @@ export interface GangstarSave {
   lavagemResto?: number;
   // lavanderia do Hub (lavagem na hora): quanto ja lavou hoje
   lavanderia?: { dia: string; lavado: number };
+  // v1.11: missoes diarias (3 por dia; progresso = estatistica atual - base do dia)
+  diarias?: { dia: string; base: Record<string, number>; resgatadas: number[]; bonus: boolean };
+  // v1.11: ultimas 20 acoes (roubos, emboscadas, extorsoes, lavagem...), mais recente primeiro
+  historico?: EntradaHistorico[];
+  // v1.11: ranking semanal de emboscadas (pontos = poder dos alvos vencidos na semana)
+  emboscadaSemana?: { semana: string; base: number };
+  tituloEmboscada?: { semana: string; posicao: number };
+  ultimoRankingEmboscada?: { semana: string; posicao: number; pontos: number; premio: number; xp: number; visto: boolean };
   ultimaTemporada?: { mes: string; posicao: number; titulo: string | null; respeito: number; visto: boolean };
   // centavos de juros do banco que ainda nao viraram real (o jogo atualiza a cada 10s)
   jurosResto?: number;
@@ -1224,7 +1232,7 @@ function tentarMissaoEquipeBase(
 
   const bandidosAtualizados = save.bandidos.map((b) => (membroIds.includes(b.id) ? { ...b, lealdade: Math.max(0, b.lealdade - 10) } : b));
 
-  const chancePrisao = Math.max(0.03, missao.chancePrisaoBase - p.atributos.resistencia * 0.003) * fatorPrisaoDoDia() * fatorPiloto(save) * (1 - bonusEspecial(save, "prisao"));
+  const chancePrisao = Math.max(0.03, missao.chancePrisaoBase - p.atributos.resistencia * 0.003) * fatorPrisaoDoDia() * fatorPiloto(save) * (1 - bonusEspecial(save, "prisao")) + extraPrisaoAlerta(save);
   if (Math.random() < chancePrisao) {
     const ate = Date.now() + missao.prisaoMinutos * 60 * 1000;
     const novoP: Personagem = { ...p, energia: energiaRestante, vezesPreso: p.vezesPreso + 1, preso: { ate } };
@@ -1414,7 +1422,7 @@ export function chanceSucesso(save: GangstarSave, roubo: Roubo): number {
 
 function chancePrisaoSeFalhar(save: GangstarSave, roubo: Roubo): number {
   const reducao = save.personagem.atributos.resistencia * 0.003;
-  return Math.max(0.02, Math.min(0.95, (roubo.chancePrisaoBase - reducao) * fatorPrisaoDoDia() * fatorPiloto(save) * (1 - bonusEspecial(save, "prisao"))));
+  return Math.max(0.02, Math.min(0.95, (roubo.chancePrisaoBase - reducao) * fatorPrisaoDoDia() * fatorPiloto(save) * (1 - bonusEspecial(save, "prisao")) + extraPrisaoAlerta(save)));
 }
 
 // ---------- Regeneracao por tempo real ----------
@@ -1448,7 +1456,7 @@ export function atualizarComTempo(saveOriginal: GangstarSave): GangstarSave {
 }
 
 function aplicarRegeneracao(saveOriginal: GangstarSave): GangstarSave {
-  const save = processarLavagem(verificarTemporada(saveOriginal));
+  const save = verificarSemanaEmboscada(verificarDiarias(processarLavagem(verificarTemporada(saveOriginal))));
   const agora = Date.now();
   const decorrido = Math.max(0, agora - save.ultimaAtualizacao);
   const p = { ...save.personagem };
@@ -3073,7 +3081,15 @@ export function tentarRoubo(save: GangstarSave, rouboId: string) {
   const r = tentarRouboBase(save, rouboId);
   if (r.erro || !r.resultado) return r;
   const s1 = somarAlerta(contar(r.save, "roubos"), alertaDoRoubo(rouboId));
-  return posAcao(save, { ...r, save: r.resultado.tipo === "sucesso" ? contar(s1, "roubosOk") : s1 }, custoVida);
+  const rb = ROUBOS.find((x) => x.id === rouboId);
+  const res = r.resultado;
+  const s2 = anotar(s1, {
+    emoji: rb?.emoji ?? "🎯",
+    texto: `${rb?.nome ?? "Roubo"}: ${res.tipo === "sucesso" ? "deu certo" : res.tipo === "falha-preso" ? "preso" : "fugiu sem nada"}`,
+    valor: res.tipo === "sucesso" ? res.dinheiro : undefined,
+    ok: res.tipo === "sucesso",
+  });
+  return posAcao(save, { ...r, save: res.tipo === "sucesso" ? contar(s2, "roubosOk") : s2 }, custoVida);
 }
 
 export function tentarMissaoEquipe(save: GangstarSave, missaoId: string, membroIds: string[]): { save: GangstarSave; resultado?: ResultadoMissaoEquipe; erro?: string; raro?: ItemDef } {
@@ -3081,7 +3097,17 @@ export function tentarMissaoEquipe(save: GangstarSave, missaoId: string, membroI
   if (ferido) return { save, erro: ferido };
   const r00 = tentarMissaoEquipeBase(save, missaoId, membroIds);
   if (r00.erro || !r00.resultado) return r00;
-  const r0 = { ...r00, save: somarAlerta(r00.save, alertaDaMissao(missaoId)) };
+  const mq = MISSOES_EQUIPE.find((x) => x.id === missaoId);
+  const rq = r00.resultado;
+  const r0 = {
+    ...r00,
+    save: anotar(somarAlerta(r00.save, alertaDaMissao(missaoId)), {
+      emoji: "🚐",
+      texto: `Equipe · ${mq?.nome ?? "Roubo"}: ${rq.tipo === "sucesso" ? "deu certo" : rq.tipo === "falha-preso" ? "preso" : "fugiu sem nada"}`,
+      valor: rq.tipo === "sucesso" ? rq.dinheiro : undefined,
+      ok: rq.tipo === "sucesso",
+    }),
+  };
   const r = posAcao(save, r0, VIDA_ROUBO_EQUIPE);
   if (r.resultado?.tipo !== "sucesso") return r;
   let novo = contar(r.save, "missoesEquipeOk");
@@ -3103,8 +3129,15 @@ export function coletarExtorsao(save: GangstarSave, id: string) {
   if (ferido) return { save, erro: ferido };
   const r = coletarExtorsaoBase(save, id);
   if (r.erro || !r.resultado) return r;
-  const s1 = somarAlerta(r.save, ALERTA_COLETA_EXTORSAO);
-  return posAcao(save, { ...r, save: r.resultado.tipo === "coletou" ? contar(s1, "extorsoesColetadas") : s1 }, VIDA_EXTORSAO);
+  const ext = EXTORSOES.find((x) => x.id === id);
+  const re = r.resultado;
+  const s1 = anotar(somarAlerta(r.save, ALERTA_COLETA_EXTORSAO), {
+    emoji: "💼",
+    texto: re.tipo === "coletou" ? `Coletou ${ext?.nome ?? "extorsão"}` : `Flagrante em ${ext?.nome ?? "extorsão"}: preso`,
+    valor: re.tipo === "coletou" ? re.valor : -re.perdido,
+    ok: re.tipo === "coletou",
+  });
+  return posAcao(save, { ...r, save: re.tipo === "coletou" ? contar(s1, "extorsoesColetadas") : s1 }, VIDA_EXTORSAO);
 }
 
 export function conquistarExtorsao(save: GangstarSave, id: string): { save: GangstarSave; erro?: string } {
@@ -3113,7 +3146,9 @@ export function conquistarExtorsao(save: GangstarSave, id: string): { save: Gang
   if (ferido) return { save, erro: ferido };
   const r = conquistarExtorsaoBase(save, id);
   if (r.erro) return r;
-  return posAcao(save, { ...r, save: somarAlerta(r.save, ALERTA_DOMINAR_EXTORSAO) }, VIDA_EXTORSAO);
+  const ext = EXTORSOES.find((x) => x.id === id);
+  const s1 = anotar(somarAlerta(r.save, ALERTA_DOMINAR_EXTORSAO), { emoji: ext?.emoji ?? "💼", texto: `Dominou ${ext?.nome ?? "estabelecimento"}`, ok: true });
+  return posAcao(save, { ...r, save: s1 }, VIDA_EXTORSAO);
 }
 
 // v1.9: extorsao chama a atencao da Federal: +10% ao dominar, +5% a cada coleta
@@ -3122,10 +3157,22 @@ export const ALERTA_COLETA_EXTORSAO = 5;
 
 export function emboscar(save: GangstarSave, alvoId: string, emGrupo = false): { save: GangstarSave; erro?: string; resultado?: ResultadoEmboscada } {
   if (save.personagem.nivel < NIVEL_EMBOSCADA) return { save, erro: `Emboscadas liberam no nível ${NIVEL_EMBOSCADA}.` };
-  const custo = alvosEmboscada(save).find((a) => a.id === alvoId)?.vida ?? VIDA_EMBOSCADA;
+  const alvo = alvosEmboscada(save).find((a) => a.id === alvoId);
+  const custo = alvo?.vida ?? VIDA_EMBOSCADA;
   const ferido = exigeVida(save, custo);
   if (ferido) return { save, erro: ferido };
-  return posAcao(save, emboscarBase(save, alvoId, emGrupo), custo);
+  const r = emboscarBase(save, alvoId, emGrupo);
+  if (r.erro || !r.resultado) return r;
+  const ok = r.resultado.tipo === "sucesso";
+  let s1 = anotar(r.save, {
+    emoji: "🗡️",
+    texto: `Emboscada em ${alvo?.nome ?? "alvo"}${emGrupo ? " (grupo)" : ""}: ${ok ? "venceu" : r.resultado.tipo === "falha-preso" ? "preso" : "perdeu"}`,
+    valor: r.resultado.tipo === "sucesso" ? r.resultado.dinheiro : undefined,
+    ok,
+  });
+  // ranking semanal: soma o poder do alvo vencido
+  if (ok && alvo) s1 = contar(s1, "pontosEmboscada", alvo.poder);
+  return posAcao(save, { ...r, save: s1 }, custo);
 }
 
 export function fazerMotim(save: GangstarSave) {
@@ -3233,8 +3280,10 @@ export function abastecerLoja(save: GangstarSave, lojaId: string, chave: string,
   if (!inst || !ehLoja(inst.tipo)) return { save, erro: "Essa loja não é sua." };
   const item = itemPorId(parseChave(chave).id);
   if (!item || !CATEGORIAS_LOJA[inst.tipo]!.includes(item.categoria)) return { save, erro: "Essa loja não vende esse tipo de item." };
-  const n = Math.min(qtd, qtdItem(save, chave));
-  if (n <= 0) return { save, erro: "Você não tem esse item." };
+  if (qtdItem(save, chave) <= 0) return { save, erro: "Você não tem esse item." };
+  // v1.11: o que foi comprado do Mercador nao vai para a prateleira (era lucro facil)
+  const n = Math.min(qtd, vendiveisAoMercador(save, chave));
+  if (n <= 0) return { save, erro: "Itens comprados do Mercador não podem ser revendidos na loja." };
   const base = processarVendasLojas(save);
   const atual = base.predios[lojaId];
   const semItem = removerItens(base, [{ id: chave, qtd: n }]);
@@ -3864,6 +3913,21 @@ export type ResultadoBatalhaCapo = {
 };
 
 export function golpearCapo(save: GangstarSave, golpe: GolpeId): { save: GangstarSave; erro?: string; fim?: ResultadoBatalhaCapo } {
+  const r = golpearCapoBase(save, golpe);
+  if (r.erro || !r.fim) return r;
+  const capo = capoDaSemana(save);
+  return {
+    ...r,
+    save: anotar(r.save, {
+      emoji: capo.emoji,
+      texto: r.fim.derrotou ? `Derrubou o capo ${capo.nome}` : `Batalha contra ${capo.nome}: ${r.fim.dano} de dano`,
+      valor: r.fim.dinheiro || undefined,
+      ok: r.fim.derrotou,
+    }),
+  };
+}
+
+function golpearCapoBase(save: GangstarSave, golpe: GolpeId): { save: GangstarSave; erro?: string; fim?: ResultadoBatalhaCapo } {
   const c = estadoCapo(save);
   const b = c.batalha;
   if (!b) return { save, erro: "Nenhuma batalha em andamento." };
@@ -4750,6 +4814,20 @@ export type ResultadoLavagem = {
 
 // valor null = tudo o dinheiro sujo
 export function lavarDinheiro(save: GangstarSave, predioId: string, valor: number | null): ResultadoLavagem {
+  const r = lavarDinheiroBase(save, predioId, valor);
+  if (r.erro || !r.valor) return r;
+  return {
+    ...r,
+    save: anotar(r.save, {
+      emoji: "🧼",
+      texto: r.batida ? `Batida fiscal na fachada (perdeu ${`R$ ${r.batida.perdeu.toLocaleString("pt-BR")}`})` : "Mandou para lavar na fachada",
+      valor: r.valor,
+      ok: !r.batida,
+    }),
+  };
+}
+
+function lavarDinheiroBase(save: GangstarSave, predioId: string, valor: number | null): ResultadoLavagem {
   const inst = save.predios[predioId];
   const p = save.personagem;
   if (!inst || !ehFachada(inst.tipo)) return { save, erro: "Esse prédio não serve de fachada." };
@@ -4875,6 +4953,23 @@ export function lavarNaLavanderia(
   save: GangstarSave,
   valor: number | null,
 ): { save: GangstarSave; erro?: string; valor?: number; limpo?: number; batida?: { perdeu: number; preso: boolean } } {
+  const r = lavarNaLavanderiaBase(save, valor);
+  if (r.erro || !r.valor) return r;
+  return {
+    ...r,
+    save: anotar(r.save, {
+      emoji: "🧺",
+      texto: r.batida ? `Lavanderia: batida fiscal (perdeu R$ ${r.batida.perdeu.toLocaleString("pt-BR")})` : `Lavanderia: lavou R$ ${r.valor.toLocaleString("pt-BR")}`,
+      valor: r.limpo,
+      ok: !r.batida,
+    }),
+  };
+}
+
+function lavarNaLavanderiaBase(
+  save: GangstarSave,
+  valor: number | null,
+): { save: GangstarSave; erro?: string; valor?: number; limpo?: number; batida?: { perdeu: number; preso: boolean } } {
   const p = save.personagem;
   if (p.preso) return { save, erro: msgBloqueado(p) };
   const resta = restanteLavanderia(save);
@@ -4914,4 +5009,235 @@ export function lavarNaLavanderia(
     return { save: novo, valor: v, limpo, batida: { perdeu, preso } };
   }
   return { save: novo, valor: v, limpo };
+}
+
+
+// =====================================================================================
+// v1.11: alerta alto atrapalha roubos, missoes diarias, historico de acoes e ranking
+// semanal de emboscadas
+// =====================================================================================
+
+// ---------- Delegacia: com o alerta acima de 80%, +5% de chance de prisao nos roubos ----------
+
+export const ALERTA_PERIGO = 80;
+export const EXTRA_PRISAO_ALERTA = 0.05;
+
+export function extraPrisaoAlerta(save: GangstarSave): number {
+  return suspeitaAtual(save) > ALERTA_PERIGO ? EXTRA_PRISAO_ALERTA : 0;
+}
+
+// ---------- Historico de acoes (Perfil) ----------
+
+export interface EntradaHistorico {
+  em: number;
+  emoji: string;
+  texto: string;
+  valor?: number; // dinheiro ganho (negativo = perdido)
+  ok: boolean;
+}
+
+function anotar(save: GangstarSave, e: Omit<EntradaHistorico, "em">): GangstarSave {
+  return { ...save, historico: [{ em: Date.now(), ...e }, ...(save.historico ?? [])].slice(0, 20) };
+}
+
+// ---------- Missoes diarias: 3 por dia, recompensa em XP e itens ----------
+
+interface ModeloDiaria {
+  id: string;
+  chave: string; // estatistica que conta o progresso
+  emoji: string;
+  nivelMin: number;
+  alvo: (nivel: number) => number;
+  texto: (alvo: number) => string;
+}
+
+const MODELOS_DIARIAS: ModeloDiaria[] = [
+  { id: "roubos", chave: "roubos", emoji: "🎯", nivelMin: 1, alvo: (n) => 4 + Math.floor(n / 3), texto: (a) => `Faça ${a} roubos solo` },
+  { id: "roubos-ok", chave: "roubosOk", emoji: "💰", nivelMin: 1, alvo: (n) => 3 + Math.floor(n / 4), texto: (a) => `Acerte ${a} roubos solo` },
+  {
+    id: "lavar",
+    chave: "lavado",
+    emoji: "🧺",
+    nivelMin: 1,
+    alvo: (n) => Math.round((5000 + (n - 1) * 2500) * 0.5 / 500) * 500,
+    texto: (a) => `Lave R$ ${a.toLocaleString("pt-BR")}`,
+  },
+  { id: "extorsoes", chave: "extorsoesColetadas", emoji: "💼", nivelMin: 5, alvo: (n) => (n >= 12 ? 3 : 2), texto: (a) => `Colete ${a} extorsões` },
+  { id: "equipe", chave: "missoesEquipeOk", emoji: "🚐", nivelMin: 5, alvo: () => 1, texto: () => "Conclua 1 roubo em equipe" },
+  { id: "navio", chave: "naviosEntregues", emoji: "⚓", nivelMin: 7, alvo: () => 1, texto: () => "Entregue 1 navio no Porto" },
+];
+
+export interface MissaoDiaria {
+  indice: number;
+  emoji: string;
+  texto: string;
+  alvo: number;
+  progresso: number;
+  resgatada: boolean;
+  xp: number;
+}
+
+function modelosDoDia(save: GangstarSave, dia: string): { m: ModeloDiaria; alvo: number }[] {
+  const nivel = save.personagem.nivel;
+  const elegiveis = MODELOS_DIARIAS.filter((m) => nivel >= m.nivelMin);
+  const rnd = rngSemente(hashTexto(`diarias-${dia}`) + (save.criadoEm % 100000));
+  const lista = [...elegiveis];
+  // embaralha e pega 3
+  for (let i = lista.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [lista[i], lista[j]] = [lista[j], lista[i]];
+  }
+  return lista.slice(0, 3).map((m) => ({ m, alvo: m.alvo(nivel) }));
+}
+
+function verificarDiarias(save: GangstarSave, agora = Date.now()): GangstarSave {
+  const dia = diaHoje(agora);
+  if (save.diarias?.dia === dia) return save;
+  const base: Record<string, number> = {};
+  for (const m of MODELOS_DIARIAS) base[m.chave] = estatistica(save, m.chave);
+  return { ...save, diarias: { dia, base, resgatadas: [], bonus: false } };
+}
+
+function xpDiaria(save: GangstarSave): number {
+  return 40 + save.personagem.nivel * 15;
+}
+
+export function missoesDiarias(save: GangstarSave, agora = Date.now()): MissaoDiaria[] {
+  const s = verificarDiarias(save, agora);
+  const d = s.diarias!;
+  return modelosDoDia(s, d.dia).map(({ m, alvo }, indice) => ({
+    indice,
+    emoji: m.emoji,
+    texto: m.texto(alvo),
+    alvo,
+    progresso: Math.min(alvo, Math.max(0, estatistica(s, m.chave) - (d.base[m.chave] ?? 0))),
+    resgatada: d.resgatadas.includes(indice),
+    xp: xpDiaria(s),
+  }));
+}
+
+function itemDeRecompensa(save: GangstarSave, q: number): { chave: string; item: ItemDef } {
+  const pool = ITENS.filter((i) => i.nivel <= nivelItensDisponiveis(save) && i.nivel >= Math.max(1, nivelItensDisponiveis(save) - 2));
+  const item = pool[Math.floor(Math.random() * pool.length)] ?? ITENS[0];
+  return { chave: chaveItem(item.id, q), item };
+}
+
+export function resgatarDiaria(save: GangstarSave, indice: number): { save: GangstarSave; erro?: string; xp?: number; item?: ItemDef; q?: number } {
+  const s = verificarDiarias(save);
+  const m = missoesDiarias(s)[indice];
+  if (!m) return { save, erro: "Missão não encontrada." };
+  if (m.resgatada) return { save, erro: "Recompensa já resgatada." };
+  if (m.progresso < m.alvo) return { save, erro: "Missão ainda não concluída." };
+  const q = 1 + (Math.random() < 0.4 ? 1 : 0);
+  const { chave, item } = itemDeRecompensa(s, q);
+  const novo: GangstarSave = {
+    ...s,
+    personagem: ganharXp(s.personagem, m.xp),
+    inventario: addInventario(s.inventario, chave, 1),
+    diarias: { ...s.diarias!, resgatadas: [...s.diarias!.resgatadas, indice] },
+  };
+  return { save: anotar(novo, { emoji: "📅", texto: `Missão diária: ${m.texto}`, ok: true }), xp: m.xp, item, q };
+}
+
+// bonus por completar as 3 do dia: o dobro de XP e um item nota A
+export function bonusDiariasDisponivel(save: GangstarSave): boolean {
+  const s = verificarDiarias(save);
+  return !s.diarias!.bonus && missoesDiarias(s).every((m) => m.resgatada);
+}
+
+export function resgatarBonusDiarias(save: GangstarSave): { save: GangstarSave; erro?: string; xp?: number; item?: ItemDef; q?: number } {
+  const s = verificarDiarias(save);
+  if (s.diarias!.bonus) return { save, erro: "Bônus de hoje já resgatado." };
+  if (!missoesDiarias(s).every((m) => m.resgatada)) return { save, erro: "Resgate as 3 missões do dia primeiro." };
+  const xp = xpDiaria(s) * 2;
+  const q = 3;
+  const { chave, item } = itemDeRecompensa(s, q);
+  const novo: GangstarSave = {
+    ...s,
+    personagem: ganharXp(s.personagem, xp),
+    inventario: addInventario(s.inventario, chave, 1),
+    diarias: { ...s.diarias!, bonus: true },
+  };
+  return { save: anotar(novo, { emoji: "🏅", texto: "Bônus das 3 missões diárias", ok: true }), xp, item, q };
+}
+
+// ---------- Ranking semanal de emboscadas ----------
+
+export const TITULOS_EMBOSCADA = [
+  { posicao: 1, emoji: "🥇", titulo: "Terror das Ruas", premio: 50000, xp: 500 },
+  { posicao: 2, emoji: "🥈", titulo: "Caçador de Gangsters", premio: 25000, xp: 300 },
+  { posicao: 3, emoji: "🥉", titulo: "Tocaieiro", premio: 10000, xp: 150 },
+];
+
+// quanto dos pontos finais um rival de IA ja fez (0 a 1) ao longo da semana
+function fracaoDaSemana(agora: number): number {
+  return ((agora + 3 * 86400000) % SEMANA_MS) / SEMANA_MS;
+}
+
+const FATORES_RIVAIS = [9, 7.5, 6.5, 5.5, 4.5, 3.5, 2.5, 1.5, 0.8];
+
+export interface LinhaRankingEmboscada {
+  nome: string;
+  pontos: number;
+  voce: boolean;
+}
+
+function rivaisEmboscada(save: GangstarSave, semana: string): { nome: string; final: number }[] {
+  const n = Number(semana.slice(1)) || 0;
+  const semente = save.criadoEm % 100000;
+  const nomes = nomesDaSemana(n + 5000, semente + 77);
+  const extras = nomesDaSemana(n + 9000, semente + 91, new Set(nomes.map((x) => x.nome.split(" ")[0])));
+  const todos = [...nomes, ...extras];
+  const rnd = rngSemente(hashTexto(`rank-emb-${semana}`) + semente);
+  const base = Math.max(20, poderEmboscada(save));
+  return FATORES_RIVAIS.map((f, i) => ({ nome: todos[i]?.nome ?? `Rival ${i + 1}`, final: Math.round(base * f * (0.85 + rnd() * 0.3)) }));
+}
+
+function pontosEmboscadaSemana(save: GangstarSave): number {
+  const base = save.emboscadaSemana?.semana === semanaAtual() ? save.emboscadaSemana.base : estatistica(save, "pontosEmboscada");
+  return Math.max(0, estatistica(save, "pontosEmboscada") - base);
+}
+
+export function rankingEmboscadaSemana(save: GangstarSave, agora = Date.now()): LinhaRankingEmboscada[] {
+  const semana = semanaAtual(agora);
+  const fr = fracaoDaSemana(agora);
+  const linhas: LinhaRankingEmboscada[] = rivaisEmboscada(save, semana).map((r) => ({ nome: r.nome, pontos: Math.round(r.final * fr), voce: false }));
+  linhas.push({ nome: save.personagem.nome, pontos: pontosEmboscadaSemana(save), voce: true });
+  return linhas.sort((a, b) => b.pontos - a.pontos || (a.voce ? -1 : 1));
+}
+
+export function tituloEmboscadaAtual(save: GangstarSave): (typeof TITULOS_EMBOSCADA)[number] | null {
+  const t = save.tituloEmboscada;
+  if (!t || t.semana !== semanaAtual()) return null;
+  return TITULOS_EMBOSCADA.find((x) => x.posicao === t.posicao) ?? null;
+}
+
+// virada de semana: fecha o ranking da semana anterior e entrega o titulo do top 3
+function verificarSemanaEmboscada(save: GangstarSave, agora = Date.now()): GangstarSave {
+  const semana = semanaAtual(agora);
+  const atual = save.emboscadaSemana;
+  if (!atual) return { ...save, emboscadaSemana: { semana, base: estatistica(save, "pontosEmboscada") } };
+  if (atual.semana === semana) return save;
+  const pontos = Math.max(0, estatistica(save, "pontosEmboscada") - atual.base);
+  let novo: GangstarSave = { ...save, emboscadaSemana: { semana, base: estatistica(save, "pontosEmboscada") } };
+  if (pontos <= 0 || save.personagem.nivel < NIVEL_EMBOSCADA) return novo;
+  const finais = rivaisEmboscada(save, atual.semana).map((r) => r.final);
+  const posicao = 1 + finais.filter((f) => f > pontos).length;
+  const t = TITULOS_EMBOSCADA.find((x) => x.posicao === posicao);
+  novo = { ...novo, ultimoRankingEmboscada: { semana: atual.semana, posicao, pontos, premio: t?.premio ?? 0, xp: t?.xp ?? 0, visto: false } };
+  if (t) {
+    const p = novo.personagem;
+    novo = {
+      ...novo,
+      personagem: ganharXp({ ...p, dinheiroSujo: sujo(p) + t.premio }, t.xp),
+      tituloEmboscada: { semana, posicao },
+    };
+    novo = anotar(novo, { emoji: t.emoji, texto: `Ranking de emboscadas: ${posicao}º lugar · título "${t.titulo}"`, valor: t.premio, ok: true });
+  }
+  return novo;
+}
+
+export function marcarRankingEmboscadaVisto(save: GangstarSave): GangstarSave {
+  if (!save.ultimoRankingEmboscada || save.ultimoRankingEmboscada.visto) return save;
+  return { ...save, ultimoRankingEmboscada: { ...save.ultimoRankingEmboscada, visto: true } };
 }

@@ -7,7 +7,7 @@
 import { useState } from "react";
 import { useConta } from "../conta";
 import { sairDaConta } from "@/lib/multiplayer";
-import { ARMAS, CLASSES, GangstarSave, armaEquipada, coleteEquipado, desequipar, equiparArma, equiparItem, poderDeRoubo, proximoNivelInfo, qtdItem, especialEquipado, durabilidadeItem, durabilidadeMax } from "@/lib/gangstar";
+import { ARMAS, CLASSES, GangstarSave, armaEquipada, coleteEquipado, desequipar, equiparArma, equiparItem, poderDeRoubo, proximoNivelInfo, tituloEmboscadaAtual, qtdItem, especialEquipado, durabilidadeItem, durabilidadeMax } from "@/lib/gangstar";
 import { ITENS, ITENS_RAROS, RARIDADES } from "@/lib/gangstarItens";
 
 function Barra({ valor, max, cor }: { valor: number; max: number; cor: string }) {
@@ -54,6 +54,11 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
         {classe.nome} · Nível {p.nivel}
         {proximo !== null && <> · faltam {faltam} xp</>}
       </p>
+      {tituloEmboscadaAtual(save) && (
+        <p className="gs-titulo-semana">
+          {tituloEmboscadaAtual(save)!.emoji} {tituloEmboscadaAtual(save)!.titulo} <small>(ranking de emboscadas da semana passada)</small>
+        </p>
+      )}
 
       <div className="gs-stat">
         <span>⭐ XP</span>
@@ -225,6 +230,7 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
       </div>
 
       <p className="gs-dica">💡 {classe.descricao}</p>
+      <HistoricoAcoes save={save} />
       <h3 className="gs-h3">🏆 Sala de troféus</h3>
       {(save.trofeus ?? []).length === 0 ? (
         <p className="gs-dica">Nenhum troféu ainda. Termine uma temporada mensal no top 3 do ranking de gangues para ganhar um título permanente.</p>
@@ -263,5 +269,44 @@ export function Perfil({ save, aoAtualizar, aoSair }: { save: GangstarSave; aoAt
         </div>
       )}
     </div>
+  );
+}
+
+// v1.11: ultimas 20 acoes (roubos, emboscadas, extorsoes, lavagem, missoes...)
+function HistoricoAcoes({ save }: { save: GangstarSave }) {
+  const [aberto, setAberto] = useState(false);
+  const lista = save.historico ?? [];
+  const quando = (em: number) => {
+    const min = Math.floor((Date.now() - em) / 60000);
+    if (min < 1) return "agora";
+    if (min < 60) return `${min} min`;
+    if (min < 1440) return `${Math.floor(min / 60)}h`;
+    return `${Math.floor(min / 1440)}d`;
+  };
+  return (
+    <>
+      <button className="gs-btn-link" onClick={() => setAberto(!aberto)}>
+        🗒️ Histórico de ações ({lista.length}) {aberto ? "▲" : "▼"}
+      </button>
+      {aberto &&
+        (lista.length === 0 ? (
+          <p className="gs-dica">Nada ainda. Seus roubos, emboscadas, coletas e lavagens aparecem aqui.</p>
+        ) : (
+          <div className="gs-historico">
+            {lista.map((h, i) => (
+              <div key={`${h.em}-${i}`} className={`gs-historico-linha ${h.ok ? "" : "gs-historico-falha"}`}>
+                <span className="gs-historico-emoji">{h.emoji}</span>
+                <span className="gs-historico-texto">{h.texto}</span>
+                {h.valor !== undefined && h.valor !== 0 && (
+                  <strong className={h.valor > 0 ? "gs-ok" : "gs-risco"}>
+                    {h.valor > 0 ? "+" : "−"}R$ {Math.abs(h.valor).toLocaleString("pt-BR")}
+                  </strong>
+                )}
+                <small>{quando(h.em)}</small>
+              </div>
+            ))}
+          </div>
+        ))}
+    </>
   );
 }

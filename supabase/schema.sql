@@ -32,6 +32,10 @@ create table if not exists public.gs_saves (
   atualizado_em timestamptz not null default now()
 );
 
+-- v1.11: um aparelho por vez. Quem entra grava o id do aparelho aqui; o outro aparelho
+-- para de sincronizar e mostra o aviso "sessao aberta em outro aparelho".
+alter table public.gs_saves add column if not exists sessao text;
+
 -- Ataques PvP: calculados SO no servidor (rota /api/pvp/atacar). Um registro unico
 -- com o resultado e o efeito em cada lado: os dois aparelhos mostram o mesmo resultado.
 create table if not exists public.gs_ataques (

@@ -641,3 +641,19 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-mapa-alvo-dominado { stroke: rgba(125, 232, 163, 0.55); stroke-width: 4; }
 .gs-mapa-alvo-dominado:hover, .gs-mapa-alvo-dominado:focus-visible { fill: rgba(125, 232, 163, 0.12); stroke: rgba(125, 232, 163, 0.9); }
 
+
+/* v1.11: aviso de sessao em outro aparelho fica acima de tudo */
+.gs-popup-bloqueio { z-index: 5000; }
+
+/* v1.11: missoes diarias, historico de acoes e titulo semanal */
+.gs-diaria-barra { height: 6px; border-radius: 4px; background: #1a0f2e; border: 1px solid #3a2a52; overflow: hidden; margin: 5px 0 3px; }
+.gs-diaria-barra > div { height: 100%; background: linear-gradient(90deg, #ff4fd8, #ffb020); }
+.gs-diaria-bonus { border-style: dashed; border-color: #ffcc33; }
+.gs-historico { display: grid; gap: 4px; margin: 6px 0 14px; }
+.gs-historico-linha { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; gap: 6px; align-items: center; font-size: 12.5px; padding: 6px 8px; border-radius: 8px; background: #160c28; border: 1px solid #2c1f44; }
+.gs-historico-linha small { color: #8a7aa8; font-size: 11px; }
+.gs-historico-texto { min-width: 0; overflow-wrap: anywhere; }
+.gs-historico-falha .gs-historico-texto { color: #e6a3b3; }
+.gs-titulo-semana { margin: -4px 0 10px; color: #ffcc33; font-weight: 700; }
+.gs-titulo-semana small { color: #8a7aa8; font-weight: 400; }
+.gs-ranking-emb { margin-bottom: 8px; }

@@ -1,7 +1,7 @@
 "use client";
 
-// Gangstar: aba "Missoes" - historia em capitulos (um objetivo de cada vez para o
-// jogador seguir) e conquistas com recompensa em dinheiro.
+// Gangstar: aba "Missoes" - missoes diarias (v1.11), historia em capitulos (um objetivo de
+// cada vez para o jogador seguir) e conquistas com recompensa em dinheiro.
 
 import { useState } from "react";
 import {
@@ -16,14 +16,18 @@ import {
   capitulosDoJogador,
   resgatarCapitulo,
   resgatarConquista,
+  bonusDiariasDisponivel,
+  missoesDiarias,
 } from "@/lib/gangstar";
+import { MissoesDiarias } from "../MissoesDiarias";
 
 function formatarDinheiro(v: number): string {
   return `R$ ${v.toLocaleString("pt-BR")}`;
 }
 
 export function Missoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar: (s: GangstarSave) => void }) {
-  const [aba, setAba] = useState<"historia" | "conquistas">("historia");
+  const [aba, setAba] = useState<"diarias" | "historia" | "conquistas">("diarias");
+  const diariaProntas = missoesDiarias(save).some((m) => !m.resgatada && m.progresso >= m.alvo) || bonusDiariasDisponivel(save);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const cap = capituloAtual(save);
   const numero = save.historia.capitulo + 1;
@@ -43,6 +47,9 @@ export function Missoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar
     <div className="gs-pagina">
       <h2 className="gs-h2">📜 Missões</h2>
       <div className="gs-sub-abas">
+        <button className={`gs-sub-aba ${aba === "diarias" ? "gs-sub-aba-ativa" : ""}`} onClick={() => setAba("diarias")}>
+          DIÁRIAS {diariaProntas && "•"}
+        </button>
         <button className={`gs-sub-aba ${aba === "historia" ? "gs-sub-aba-ativa" : ""}`} onClick={() => setAba("historia")}>
           HISTÓRIA {completo && "•"}
         </button>
@@ -51,6 +58,8 @@ export function Missoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar
         </button>
       </div>
       {mensagem && <div className="gs-aviso">{mensagem}</div>}
+
+      {aba === "diarias" && <MissoesDiarias save={save} aoAtualizar={aoAtualizar} aoMensagem={setMensagem} />}
 
       {aba === "historia" && !cap && (
         <div className="gs-capitulo gs-capitulo-fim">
