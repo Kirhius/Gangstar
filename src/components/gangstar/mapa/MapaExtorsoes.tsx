@@ -1,7 +1,7 @@
 "use client";
 
 // Gangstar: mapa ilustrado do bairro das extorsoes. Cada estabelecimento e clicavel;
-// os dominados ficam com contorno verde e uma moeda quando ha dinheiro para coletar,
+// os dominados ficam com contorno verde e o valor acumulado em cima (v1.12),
 // os que ainda pedem mais poder mostram um cadeado.
 
 import { useState } from "react";
@@ -29,7 +29,14 @@ export interface EstadoAlvoExtorsao {
   nome: string;
   meu: boolean;
   bloqueado: boolean;
-  pendente: boolean;
+  pendente: number; // valor acumulado para coletar
+}
+
+// "R$ 850", "R$ 12,5 mil"
+function valorCurto(v: number): string {
+  if (v >= 1000000) return `R$ ${(v / 1000000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
+  if (v >= 10000) return `R$ ${(v / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mil`;
+  return `R$ ${Math.floor(v).toLocaleString("pt-BR")}`;
 }
 
 function centro(pol: [number, number][]): [number, number] {
@@ -68,12 +75,19 @@ export function MapaExtorsoes({ estados, onLocal }: { estados: Record<string, Es
           const e = estados[a.id];
           if (!e) return null;
           const [cx, cy] = centro(a.poligono);
-          if (e.meu && e.pendente) {
+          if (e.meu) {
+            // valor acumulado em cima do predio (atualiza sozinho a cada tick do jogo)
+            const texto = valorCurto(e.pendente);
+            const larg = texto.length * 17 + 30;
+            const topo = Math.max(30, Math.min(...a.poligono.map((p) => p[1])) + 6);
+            const x = Math.max(larg / 2 + 4, Math.min(W - larg / 2 - 4, cx));
+            // no canto superior direito fica o botao do olho: desce um pouco o valor
+            const topoFinal = x > W - 260 && topo < 130 ? 130 : topo;
             return (
-              <g key={`m-${a.id}`} className="gs-mapa-moeda" pointerEvents="none">
-                <circle cx={cx} cy={cy} r={26} fill="#1a3a24" stroke="#4caf7a" strokeWidth={5} />
-                <text x={cx} y={cy + 11} textAnchor="middle" fontSize={32} fontWeight={700} fill="#7de8a3">
-                  $
+              <g key={`m-${a.id}`} className={e.pendente > 0 ? "gs-mapa-valor gs-mapa-moeda" : "gs-mapa-valor"} pointerEvents="none">
+                <rect x={x - larg / 2} y={topoFinal - 24} width={larg} height={46} rx={14} fill="#123222" stroke="#4caf7a" strokeWidth={4} />
+                <text x={x} y={topoFinal + 10} textAnchor="middle" fontSize={30} fontWeight={700} fill={e.pendente > 0 ? "#7de8a3" : "#8fbfa0"}>
+                  {texto}
                 </text>
               </g>
             );

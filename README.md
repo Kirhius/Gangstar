@@ -48,6 +48,11 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.12.0
+
+- Lojas e fachadas em abas: no topo ficam "Evoluir [valor]" e "Lavar dinheiro" (botões mais baixos). Em "Lavar dinheiro" aparece só a lavagem, e o botão vira "← Loja" para voltar.
+- Extorsões: em cada estabelecimento seu o mapa mostra o valor acumulado em cima do prédio (antes era só um "$"), atualizado sozinho.
+
 ## v1.11.0
 
 - Brecha fechada: itens comprados do Mercador não vão mais para a prateleira das lojas/boate (era comprar a 75% e vender a 140%).

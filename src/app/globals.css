@@ -657,3 +657,7 @@ button.gs-evento-dia:active { transform: scale(0.97); }
 .gs-titulo-semana { margin: -4px 0 10px; color: #ffcc33; font-weight: 700; }
 .gs-titulo-semana small { color: #8a7aa8; font-weight: 400; }
 .gs-ranking-emb { margin-bottom: 8px; }
+
+/* v1.12: barra superior das lojas/fachadas (Evoluir | Lavar dinheiro) mais baixa */
+.gs-botoes-compactos { margin: 4px 0 10px; }
+.gs-botoes-compactos .gs-btn { padding: 9px 6px; font-size: 9.5px; letter-spacing: 0.3px; line-height: 1.35; min-width: 0; }

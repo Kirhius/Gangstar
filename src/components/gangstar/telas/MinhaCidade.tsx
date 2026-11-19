@@ -4,7 +4,7 @@
 // Cada predio tem uma funcao fixa (hotel, loja, fabrica, boate, gestao). Tocar num
 // predio abre um popup: comprar (ele ja vem construido) ou gerenciar o que e seu.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   GangstarSave,
   PREDIOS,
@@ -81,6 +81,9 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
   const [aberto, setAberto] = useState<string | null>(null);
   const [recrutando, setRecrutando] = useState(false);
   const [noCassino, setNoCassino] = useState(false);
+  // v1.12: lojas/fachadas em abas - "principal" (loja) ou "lavar" (lavagem de dinheiro)
+  const [abaPredio, setAbaPredio] = useState<"principal" | "lavar">("principal");
+  useEffect(() => setAbaPredio("principal"), [aberto]);
   const gestaoPronta = temGestaoConstruida(save);
   const pendenteTotal = producaoTotalPendente(save);
   const meus = PREDIOS_CIDADE.filter((p) => save.predios[p.id]).length;
@@ -347,7 +350,7 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
                   Nível {instAberta.nivel} de 3 {defAberto.rendaPorHora > 0 && `· rende ${formatarDinheiro(defAberto.rendaPorHora * instAberta.nivel)}/h`}
                   {ehLoja(instAberta.tipo) && " · a renda vem só das vendas. Cada nível traz mais clientes."}
                 </p>
-                {defAberto.rendaPorHora > 0 && (
+                {defAberto.rendaPorHora > 0 && abaPredio === "principal" && (
                   <div className="gs-card">
                     <span className="gs-card-emoji">💰</span>
                     <div className="gs-card-corpo">
@@ -356,33 +359,57 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
                     </div>
                   </div>
                 )}
-                <div className="gs-botoes-duplos">
-                  {defAberto.rendaPorHora > 0 && (
-                    <button className="gs-btn gs-btn-principal" disabled={producaoPendente(instAberta, save) <= 0} onClick={() => coletar(aberto)}>
-                      Coletar
-                    </button>
-                  )}
-                  {instAberta.nivel < 3 && (
+                {ehFachada(instAberta.tipo) ? (
+                  // v1.12: barra superior com Evoluir e a troca entre a loja e a lavagem
+                  <div className="gs-botoes-duplos gs-botoes-compactos">
                     <button
                       className="gs-btn gs-btn-secundario"
-                      disabled={save.personagem.dinheiro < custoUpgrade(instAberta.tipo, instAberta.nivel)}
+                      disabled={instAberta.nivel >= 3 || save.personagem.dinheiro < custoUpgrade(instAberta.tipo, instAberta.nivel)}
                       onClick={() => upgrade(aberto)}
                     >
-                      Evoluir — {formatarDinheiro(custoUpgrade(instAberta.tipo, instAberta.nivel))}
+                      {instAberta.nivel >= 3 ? "Nível máximo" : `Evoluir ${formatarDinheiro(custoUpgrade(instAberta.tipo, instAberta.nivel))}`}
                     </button>
-                  )}
-                </div>
-                {ehFachada(instAberta.tipo) && <PainelLavagem save={save} predioId={aberto} rodar={(r, msg) => rodar(r, msg, false)} />}
-                {instAberta.tipo === "boate" && (
+                    <button
+                      className={`gs-btn ${abaPredio === "lavar" ? "gs-btn-secundario" : "gs-btn-principal"}`}
+                      onClick={() => setAbaPredio(abaPredio === "lavar" ? "principal" : "lavar")}
+                    >
+                      {abaPredio === "lavar" ? (ehLoja(instAberta.tipo) ? "← Loja" : `← ${defAberto.nome}`) : "🧼 Lavar dinheiro"}
+                    </button>
+                  </div>
+                ) : null}
+                {(!ehFachada(instAberta.tipo) || (abaPredio === "principal" && defAberto.rendaPorHora > 0)) && (
+                  <div className={ehFachada(instAberta.tipo) ? "" : "gs-botoes-duplos"}>
+                    {defAberto.rendaPorHora > 0 && (
+                      <button
+                        className={`gs-btn gs-btn-principal ${ehFachada(instAberta.tipo) ? "gs-btn-bloco" : ""}`}
+                        disabled={producaoPendente(instAberta, save) <= 0}
+                        onClick={() => coletar(aberto)}
+                      >
+                        Coletar
+                      </button>
+                    )}
+                    {!ehFachada(instAberta.tipo) && instAberta.nivel < 3 && (
+                      <button
+                        className="gs-btn gs-btn-secundario"
+                        disabled={save.personagem.dinheiro < custoUpgrade(instAberta.tipo, instAberta.nivel)}
+                        onClick={() => upgrade(aberto)}
+                      >
+                        Evoluir — {formatarDinheiro(custoUpgrade(instAberta.tipo, instAberta.nivel))}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {ehFachada(instAberta.tipo) && abaPredio === "lavar" && <PainelLavagem save={save} predioId={aberto} rodar={(r, msg) => rodar(r, msg, false)} />}
+                {abaPredio === "principal" && instAberta.tipo === "boate" && (
                   <>
                     <h3 className="gs-h3">🪩 Curtir na sua boate</h3>
                     <BoateMenu save={save} aoAtualizar={aoAtualizar} lojaId={aberto} />
                   </>
                 )}
-                {ehLoja(instAberta.tipo) && (
+                {abaPredio === "principal" && ehLoja(instAberta.tipo) && (
                   <PainelLoja save={save} lojaId={aberto} rodar={(r, msg) => rodar(r, msg, false)} />
                 )}
-                {instAberta.tipo === "boate" && (
+                {abaPredio === "principal" && instAberta.tipo === "boate" && (
                   <button
                     className="gs-btn gs-btn-cassino gs-btn-bloco"
                     onClick={() => {

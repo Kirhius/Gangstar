@@ -63,7 +63,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
   const estados: Record<string, EstadoAlvoExtorsao> = {};
   for (const e of EXTORSOES) {
     const meu = !!save.extorsoes[e.id];
-    estados[e.id] = { nome: e.nome, meu, bloqueado: poder < e.poderMin, pendente: meu && extorsaoPendente(save, e.id) > 0 };
+    estados[e.id] = { nome: e.nome, meu, bloqueado: poder < e.poderMin, pendente: meu ? extorsaoPendente(save, e.id) : 0 };
   }
   const def = aberto ? EXTORSOES.find((e) => e.id === aberto) : undefined;
   const defMeu = def ? !!save.extorsoes[def.id] : false;
