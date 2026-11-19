@@ -192,7 +192,9 @@ export interface GangstarSave {
   // slots extras do Perfil (a arma continua em personagem.armaEquipada)
   equipamento: EquipamentoExtra;
   // compras feitas na visita atual do Mercador
-  mercador: { visita: string; comprados: Record<string, number> };
+  // revenda (v1.9.3): unidades compradas do Mercador ainda guardadas, por chave de item.
+  // Essas ele nao recompra (sem lucro em comprar barato e revender caro para ele).
+  mercador: { visita: string; comprados: Record<string, number>; revenda?: Record<string, number> };
   // contratos do Porto concluidos na janela atual e navios em viagem
   porto: { janela: number; concluidos: string[]; navios: Navio[] };
   // alvos de emboscada atacados na janela atual e o capo da semana
@@ -2677,6 +2679,21 @@ export function precoVendaMercador(item: ItemDef, q = 1): number {
   return Math.round((item.valor * multQualidade(q) * 1.3) / 5) * 5;
 }
 
+// v1.9.3: o Mercador nao recompra o que vendeu (comprar barato e revender caro era lucro facil).
+// Ele guarda quantas unidades de cada item saiu da mao dele; essas ficam fora da venda.
+function unidadesDeRevenda(save: GangstarSave, chave: string): number {
+  return Math.min(save.mercador.revenda?.[chave] ?? 0, qtdItem(save, chave));
+}
+
+// quantas unidades desse item o Mercador aceita comprar (o resto veio dele mesmo)
+export function vendiveisAoMercador(save: GangstarSave, chave: string): number {
+  return Math.max(0, qtdItem(save, chave) - unidadesDeRevenda(save, chave));
+}
+
+export function compradosDoMercador(save: GangstarSave, chave: string): number {
+  return unidadesDeRevenda(save, chave);
+}
+
 export function comprarDoMercador(save: GangstarSave, itemId: string): { save: GangstarSave; erro?: string } {
   if (save.personagem.nivel < NIVEL_MERCADOR) return { save, erro: `O Mercador só negocia a partir do nível ${NIVEL_MERCADOR}.` };
   const visita = mercadorAtual();
@@ -2690,7 +2707,11 @@ export function comprarDoMercador(save: GangstarSave, itemId: string): { save: G
       ...save,
       personagem: { ...pagarComSujo(save.personagem, oferta.preco) },
       inventario: addInventario(save.inventario, chaveItem(itemId, oferta.q), 1),
-      mercador: { visita: visita.id, comprados: { ...comprados, [itemId]: (comprados[itemId] ?? 0) + 1 } },
+      mercador: {
+        visita: visita.id,
+        comprados: { ...comprados, [itemId]: (comprados[itemId] ?? 0) + 1 },
+        revenda: { ...save.mercador.revenda, [chaveItem(itemId, oferta.q)]: unidadesDeRevenda(save, chaveItem(itemId, oferta.q)) + 1 },
+      },
     },
   };
 }
@@ -2700,8 +2721,10 @@ export function venderAoMercador(save: GangstarSave, chave: string, qtd = 1): { 
   const { id, q } = parseChave(chave);
   const item = itemPorId(id);
   if (!item) return { save, erro: "Item inválido." };
-  const n = Math.min(qtd, qtdItem(save, chave));
-  if (n <= 0) return { save, erro: "Você não tem esse item." };
+  if (qtdItem(save, chave) <= 0) return { save, erro: "Você não tem esse item." };
+  // o que veio dele mesmo fica fora: ele so compra o resto (fabricas, porto, emboscadas...)
+  const n = Math.min(qtd, vendiveisAoMercador(save, chave));
+  if (n <= 0) return { save, erro: "O Mercador não recompra o que ele mesmo vendeu para você." };
   const valor = precoVendaMercador(item, q) * n;
   const semItem = removerItens(save, [{ id: chave, qtd: n }]);
   return { save: { ...semItem, personagem: { ...semItem.personagem, dinheiroSujo: sujo(semItem.personagem) + valor } }, valor };

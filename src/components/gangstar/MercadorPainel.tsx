@@ -4,7 +4,7 @@
 // Vende itens 25% abaixo do valor e compra os seus 30% acima.
 
 import { useState } from "react";
-import { GangstarSave, comprarDoMercador, mercadorAtual, ofertasMercador, parseChave, precoVendaMercador, venderAoMercador, saldoAceitandoSujo } from "@/lib/gangstar";
+import { GangstarSave, comprarDoMercador, mercadorAtual, ofertasMercador, parseChave, compradosDoMercador, precoVendaMercador, vendiveisAoMercador, venderAoMercador, saldoAceitandoSujo } from "@/lib/gangstar";
 import { itemPorId, type ItemDef } from "@/lib/gangstarItens";
 import { NotaQualidade } from "./NotaQualidade";
 
@@ -81,9 +81,18 @@ export function MercadorPainel({ save, aoAtualizar, aoFechar }: { save: Gangstar
                         {item.nome} ×{qtd}
                         <NotaQualidade q={q} />
                       </strong>
-                      <span className="gs-card-sub">Ele paga {formatarDinheiro(precoVendaMercador(item, q))} cada</span>
+                      <span className="gs-card-sub">
+                        {vendiveisAoMercador(save, chave) > 0
+                          ? `Ele paga ${formatarDinheiro(precoVendaMercador(item, q))} cada`
+                          : "Comprado dele: ele não recompra"}
+                        {vendiveisAoMercador(save, chave) > 0 && compradosDoMercador(save, chave) > 0 ? ` (${compradosDoMercador(save, chave)} comprado dele fica fora)` : ""}
+                      </span>
                     </div>
-                    <button className="gs-btn-mini" onClick={() => rodar(venderAoMercador(save, chave, 1), `Vendeu ${item.nome} por ${formatarDinheiro(precoVendaMercador(item, q))}.`)}>
+                    <button
+                      className="gs-btn-mini"
+                      disabled={vendiveisAoMercador(save, chave) <= 0}
+                      onClick={() => rodar(venderAoMercador(save, chave, 1), `Vendeu ${item.nome} por ${formatarDinheiro(precoVendaMercador(item, q))}.`)}
+                    >
                       Vender
                     </button>
                   </div>
