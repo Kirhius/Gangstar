@@ -241,7 +241,7 @@ ol {
 .gs-painel-equipe { display: grid; gap: 10px; padding: 10px 12px; border-radius: 8px; background: #1a0f2e; border: 2px dashed #3a2a52; }
 .gs-membro-selecionavel { cursor: pointer; }
 .gs-membro-selecionavel input { width: 16px; height: 16px; flex: 0 0 auto; accent-color: #ff4fd8; }
-.gs-ilustracao { width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 10px; border: 2px solid #3a2a52; }
+.gs-ilustracao { width: 100%; height: auto; aspect-ratio: 3 / 1; object-fit: cover; object-position: center; margin: 0 auto; display: block; border-radius: 10px; border: 2px solid #3a2a52; } /* v1.9.1: faixa 3:1 centralizada */
 .gs-popup-resultado-ok { border-color: #4caf7a; }
 .gs-popup-resultado-falha { border-color: #e04b4b; }
 .gs-resultado-linhas { display: grid; gap: 6px; margin: 4px 0 14px; }

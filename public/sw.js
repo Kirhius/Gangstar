@@ -1,5 +1,5 @@
 // Service worker simples: deixa o jogo abrir offline depois do primeiro acesso.
-const CACHE = "gangstar-v12";
+const CACHE = "gangstar-v13";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
