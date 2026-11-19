@@ -48,6 +48,11 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.10.0
+
+- Fábricas: nível, linhas de produção e regras foram para o botão "?" ao lado do título.
+- Emboscada (alvos de IA): poder dos alvos em dobro (dinheiro igual); cada ataque custa de 40 a 60 de vida conforme a força do alvo; os alvos trocam toda segunda-feira, com nomes novos (nenhum nome ou apelido da semana anterior se repete), e cada um pode ser emboscado uma vez por semana.
+
 ## v1.9.3
 
 - Correção: dava para comprar um item do Mercador e revender para ele quase pelo dobro. Agora ele não recompra o que vendeu para você (o botão Vender fica bloqueado nessas unidades). Itens das suas fábricas, do Porto e das emboscadas continuam sendo comprados normalmente.

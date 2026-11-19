@@ -2874,8 +2874,12 @@ export function resolverNavios(save: GangstarSave, agora = Date.now()): { save: 
 
 // ---------- Emboscada: atacar gangsters de IA ----------
 
-const JANELA_EMBOSCADA_MS = 3600 * 1000;
+// v1.10: os alvos de IA trocam toda semana (segunda-feira), com nomes novos a cada troca.
+// Cada alvo pode ser emboscado uma vez por semana. Poder em dobro (o dinheiro nao muda) e
+// cada ataque custa de 40 a 60 de vida: quanto mais forte o alvo, mais caro.
+const SEMANA_MS = 7 * 86400000;
 const ENERGIA_EMBOSCADA = 15;
+const VIDA_ALVOS_EMBOSCADA = [40, 45, 50, 55, 60];
 
 export interface AlvoEmboscada {
   id: string;
@@ -2884,17 +2888,53 @@ export interface AlvoEmboscada {
   poder: number;
   dinheiro: number;
   saque: string | null;
+  vida: number; // vida que o ataque custa
 }
 
-const NOMES_ALVOS = ["Tonhão", "Doutor Lima", "Rita Faca", "Gringo", "Marcão Ferro", "Nego Dé", "Paty Veneno", "Zé Pólvora", "Valdo Cobra", "Lena Gatilho", "Russo", "Careca do Porto", "Bia Navalha", "Jorjão", "Dona Neide"];
-const EMOJIS_ALVOS = ["🕴️", "🧔", "👩‍🦰", "🤠", "💪", "🧑‍🦲", "👩", "🧨", "🐍", "🎯", "🐻", "⚓", "🗡️", "🦍", "👵"];
+const PRENOMES_ALVOS = [
+  "Tonhão", "Rita", "Marcão", "Paty", "Zé", "Valdo", "Lena", "Bia", "Jorjão", "Neide", "Dudu", "Sandrão", "Kátia", "Betão", "Lúcia",
+  "Fumaça", "Gordo", "Tico", "Mirela", "Cris", "Juca", "Neném", "Sueli", "Tatá", "Robson", "Dinho", "Vilma", "Pedrão", "Cida", "Lalo",
+  "Moacir", "Jana", "Celsinho", "Ivone", "Bigode", "Rosa", "Tadeu", "Wando", "Gina", "Nonato",
+];
+const APELIDOS_ALVOS = [
+  "Faca", "Ferro", "Veneno", "Pólvora", "Cobra", "Gatilho", "Navalha", "do Porto", "Bala", "Trinta-e-oito", "Sombra", "Lâmina", "Corvo", "Pitbull",
+  "Dinamite", "Caveira", "Brasa", "Tubarão", "Chumbo", "Fantasma", "Escorpião", "da Feira", "Canivete", "Trovão", "Gavião", "Ciclone",
+  "Martelo", "Serpente", "do Morro", "Coringa",
+];
+const EMOJIS_ALVOS = ["🕴️", "🤠", "💪", "🧨", "🐍", "🎯", "🐻", "⚓", "🗡️", "🦍", "🥷", "🦂", "🐺", "🦈", "💀", "🔪", "🃏", "🦅"];
 
 export function janelaEmboscada(agora = Date.now()): number {
-  return Math.floor(agora / JANELA_EMBOSCADA_MS);
+  // mesma virada do capo: segunda-feira (o epoch caiu numa quinta)
+  return Math.floor((agora + 3 * 86400000) / SEMANA_MS);
 }
 
 export function minutosNovosAlvos(agora = Date.now()): number {
-  return Math.ceil((JANELA_EMBOSCADA_MS - (agora % JANELA_EMBOSCADA_MS)) / 60000);
+  return Math.ceil((SEMANA_MS - ((agora + 3 * 86400000) % SEMANA_MS)) / 60000);
+}
+
+// "3d 4h", "5h 20min"...
+export function tempoNovosAlvos(agora = Date.now()): string {
+  const min = minutosNovosAlvos(agora);
+  const d = Math.floor(min / 1440);
+  const h = Math.floor((min % 1440) / 60);
+  return d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${min % 60}min` : `${min} min`;
+}
+
+function nomesDaSemana(semana: number, semente: number, evitar: Set<string> = new Set()): { nome: string; emoji: string }[] {
+  const rnd = rngSemente(semana * 7919 + semente);
+  const usados = new Set<string>();
+  const lista: { nome: string; emoji: string }[] = [];
+  for (let tent = 0; lista.length < VIDA_ALVOS_EMBOSCADA.length && tent < 500; tent++) {
+    const pre = PRENOMES_ALVOS[Math.floor(rnd() * PRENOMES_ALVOS.length)];
+    const apelido = APELIDOS_ALVOS[Math.floor(rnd() * APELIDOS_ALVOS.length)];
+    const nome = `${pre} ${apelido}`;
+    const emoji = EMOJIS_ALVOS[Math.floor(rnd() * EMOJIS_ALVOS.length)];
+    // nada de repetir prenome na mesma semana nem nome inteiro da semana passada
+    if (usados.has(pre) || evitar.has(nome) || evitar.has(pre)) continue;
+    usados.add(pre);
+    lista.push({ nome, emoji });
+  }
+  return lista;
 }
 
 export function poderEmboscada(save: GangstarSave): number {
@@ -2903,20 +2943,25 @@ export function poderEmboscada(save: GangstarSave): number {
 
 export function alvosEmboscada(save: GangstarSave, agora = Date.now()): AlvoEmboscada[] {
   const janela = janelaEmboscada(agora);
-  const rnd = rngSemente(janela * 4241 + (save.criadoEm % 100000));
+  const semente = save.criadoEm % 100000;
+  // os nomes (e prenomes) da semana passada nao voltam nesta
+  const passada = nomesDaSemana(janela - 1, semente);
+  const evitar = new Set([...passada.map((n) => n.nome), ...passada.map((n) => n.nome.split(" ")[0])]);
+  const nomes = nomesDaSemana(janela, semente, evitar);
+  const rnd = rngSemente(janela * 4241 + semente);
   const base = Math.max(20, poderEmboscada(save));
   const pool = ITENS.filter((i) => i.nivel <= nivelItensDisponiveis(save));
   const fatores = [0.6, 0.8, 1, 1.2, 1.5];
   return fatores.map((f, i) => {
-    const idx = Math.floor(rnd() * NOMES_ALVOS.length);
-    const poder = Math.round(base * f * (0.9 + rnd() * 0.2));
+    const poderBase = Math.round(base * f * (0.9 + rnd() * 0.2));
     return {
       id: `emb-${janela}-${i}`,
-      nome: NOMES_ALVOS[idx],
-      emoji: EMOJIS_ALVOS[idx],
-      poder,
-      dinheiro: Math.round((poder * (25 + rnd() * 35)) / 10) * 10,
+      nome: nomes[i]?.nome ?? `Alvo ${i + 1}`,
+      emoji: nomes[i]?.emoji ?? "🕴️",
+      poder: poderBase * 2, // v1.10: +100% de poder
+      dinheiro: Math.round((poderBase * (25 + rnd() * 35)) / 10) * 10, // dinheiro como antes
       saque: rnd() < 0.6 ? pool[Math.floor(rnd() * pool.length)].id : null,
+      vida: VIDA_ALVOS_EMBOSCADA[i],
     };
   });
 }
@@ -2944,10 +2989,10 @@ function emboscarBase(save: GangstarSave, alvoId: string, emGrupo = false): { sa
   if (emGrupo && !save.bandidos.length) return { save, erro: "Você não tem bandidos para levar." };
   const p = save.personagem;
   if (!alvo) return { save, erro: "Esse alvo sumiu do mapa." };
-  if (alvoAtacado(save, alvoId)) return { save, erro: "Você já emboscou esse alvo nesta hora." };
+  if (alvoAtacado(save, alvoId)) return { save, erro: "Você já emboscou esse alvo nesta semana." };
   if (p.preso) return { save, erro: msgBloqueado(p) };
   if (p.energia < ENERGIA_EMBOSCADA) return { save, erro: "Energia insuficiente." };
-  if (p.vida < 20) return { save, erro: "Você está muito ferido. Cure-se no hospital antes." };
+  if (p.vida <= alvo.vida) return { save, erro: `Você está muito ferido (esse alvo exige mais de ${alvo.vida} de vida). Cure-se no Hospital.` };
 
   const janela = janelaEmboscada();
   const feitas = save.emboscadas.janela === janela ? save.emboscadas.feitas : [];
@@ -2958,8 +3003,9 @@ function emboscarBase(save: GangstarSave, alvoId: string, emGrupo = false): { sa
     const parteGangue = emGrupo ? Math.round(bruto * PARTE_GANGUE_EMBOSCADA) : 0;
     const dinheiro = bruto - parteGangue;
     const saque = alvo.saque && Math.random() < 0.6 ? itemPorId(alvo.saque) : null;
-    const respeito = 4 + Math.round(alvo.poder / 12);
-    const xp = 15 + Math.round(alvo.poder / 3);
+    // respeito e xp como antes do poder dobrar (v1.10)
+    const respeito = 4 + Math.round(alvo.poder / 24);
+    const xp = 15 + Math.round(alvo.poder / 6);
     const novoP = ganharXp({ ...p, energia: p.energia - ENERGIA_EMBOSCADA, dinheiroSujo: sujo(p) + dinheiro, respeito: p.respeito + respeito }, xp);
     return {
       save: contar(
@@ -3076,9 +3122,10 @@ export const ALERTA_COLETA_EXTORSAO = 5;
 
 export function emboscar(save: GangstarSave, alvoId: string, emGrupo = false): { save: GangstarSave; erro?: string; resultado?: ResultadoEmboscada } {
   if (save.personagem.nivel < NIVEL_EMBOSCADA) return { save, erro: `Emboscadas liberam no nível ${NIVEL_EMBOSCADA}.` };
-  const ferido = exigeVida(save, VIDA_EMBOSCADA);
+  const custo = alvosEmboscada(save).find((a) => a.id === alvoId)?.vida ?? VIDA_EMBOSCADA;
+  const ferido = exigeVida(save, custo);
   if (ferido) return { save, erro: ferido };
-  return posAcao(save, emboscarBase(save, alvoId, emGrupo), VIDA_EMBOSCADA);
+  return posAcao(save, emboscarBase(save, alvoId, emGrupo), custo);
 }
 
 export function fazerMotim(save: GangstarSave) {

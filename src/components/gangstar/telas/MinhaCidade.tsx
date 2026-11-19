@@ -195,9 +195,29 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
         <div className="gs-popup-fundo" onClick={() => setAberto(null)}>
           <div className="gs-popup-painel" onClick={(e) => e.stopPropagation()}>
             <div className="gs-popup-topo">
-              <h3 className="gs-h3" style={{ margin: 0 }}>
-                {defAberto.emoji} {instAberta ? defAberto.nome : "Prédio abandonado"}
-              </h3>
+              {instAberta && ehFabrica(instAberta.tipo) ? (
+                // v1.10: nivel, linhas e regras da fabrica ficam no "?" ao lado do titulo
+                <TituloComAjuda
+                  pequeno
+                  titulo={`${defAberto.emoji} ${defAberto.nome}`}
+                  ajuda={
+                    <>
+                      <p>
+                        Nível <strong>{instAberta.nivel}</strong> de {nivelMaxPredio(instAberta.tipo)}.
+                      </p>
+                      <p>
+                        {linhasFabrica(instAberta)} {linhasFabrica(instAberta) === 1 ? "linha" : "linhas"} de produção (máx. 5).
+                      </p>
+                      <p>Cada nível libera um produto novo e a cada 2 níveis abre uma linha.</p>
+                      <p>A qualidade da produção sobe a cada 3 níveis e com contrabandistas na gangue.</p>
+                    </>
+                  }
+                />
+              ) : (
+                <h3 className="gs-h3" style={{ margin: 0 }}>
+                  {defAberto.emoji} {instAberta ? defAberto.nome : "Prédio abandonado"}
+                </h3>
+              )}
               <button className="gs-popup-fechar" onClick={() => setAberto(null)} aria-label="Fechar">
                 ✕
               </button>
@@ -253,10 +273,6 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
               const produtoSel = produtoDaFabrica(instLinha(instAberta, linhaSel));
               return (
                 <>
-                  <p className="gs-p-intro">
-                    Nível {instAberta.nivel} de {nivelMax} · {nLinhas} {nLinhas === 1 ? "linha" : "linhas"} de produção (máx. 5). Cada nível libera um produto novo e a cada 2 níveis
-                    abre uma linha.
-                  </p>
                   <div className="gs-qualidade-linha">
                     Qualidade da produção: <NotaQualidade q={qualidadeFabrica(instAberta, save)} />
                     <small>sobe a cada 3 níveis e com contrabandistas na gangue</small>

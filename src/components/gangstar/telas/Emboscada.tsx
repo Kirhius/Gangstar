@@ -1,7 +1,8 @@
 "use client";
 
 // Gangstar: aba "Emboscada" - arme emboscadas contra gangsters de IA para roubar
-// dinheiro e itens. Novos alvos a cada hora; falhar custa vida e pode dar prisão.
+// dinheiro e itens. Novos alvos (com nomes novos) toda segunda-feira; cada um custa de 40 a
+// 60 de vida para atacar e so pode ser emboscado uma vez por semana.
 
 import { useState } from "react";
 import {
@@ -11,7 +12,7 @@ import {
   chanceEmboscada,
   emboscar,
   energiaEmboscada,
-  minutosNovosAlvos,
+  tempoNovosAlvos,
   poderEmboscada,
   poderEmboscadaGrupo,
   GOLPES,
@@ -25,7 +26,6 @@ import {
   rankingDanoCapo,
   vidaCapo,
   type GolpeId,
-  VIDA_EMBOSCADA,
   notaQualidade,
   type ResultadoEmboscada,
 } from "@/lib/gangstar";
@@ -116,8 +116,8 @@ export function Emboscada({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
     <div className="gs-pagina">
       <h2 className="gs-h2">🗡️ Emboscada</h2>
       <p className="gs-p-intro">
-        Seu poder de ataque: <strong>{emGrupo ? poderEmboscadaGrupo(save) : poderEmboscada(save)}</strong> (você + armas + colete + gangue). Cada emboscada gasta ⚡{energiaEmboscada()} e ❤️{VIDA_EMBOSCADA}. Novos alvos em{" "}
-        {minutosNovosAlvos()} min.
+        Seu poder de ataque: <strong>{emGrupo ? poderEmboscadaGrupo(save) : poderEmboscada(save)}</strong> (você + armas + colete + gangue). Cada emboscada gasta ⚡{energiaEmboscada()} e de ❤️40 a ❤️60 (alvo mais forte custa mais). Cada alvo cai uma vez por semana; novos alvos em{" "}
+        {tempoNovosAlvos()}.
       </p>
       <div className="gs-capo-painel">
         <div className="gs-card gs-capo">
@@ -211,12 +211,12 @@ export function Emboscada({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
               <div className="gs-card-corpo">
                 <strong>{a.nome}</strong>
                 <span className="gs-card-sub">
-                  Poder {a.poder} · leva até {formatarDinheiro(a.dinheiro)}
+                  Poder {a.poder} · ❤️{a.vida} · leva até {formatarDinheiro(a.dinheiro)}
                   {saque ? ` · pode ter ${saque.emoji}` : ""}
                 </span>
                 <span className={`gs-card-sub ${chance < 40 ? "gs-risco" : "gs-ok"}`}>{chance}% de chance</span>
               </div>
-              <button className="gs-btn-mini" disabled={feito || !!p.preso || p.energia < energiaEmboscada() || p.vida < 20} onClick={() => atacar(a.id)}>
+              <button className="gs-btn-mini" disabled={feito || !!p.preso || p.energia < energiaEmboscada() || p.vida <= a.vida} onClick={() => atacar(a.id)}>
                 {feito ? "Feito" : "Emboscar"}
               </button>
             </div>
