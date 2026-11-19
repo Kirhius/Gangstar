@@ -33,7 +33,7 @@ export interface EstadoAlvoExtorsao {
 }
 
 // "R$ 850", "R$ 12,5 mil"
-function valorCurto(v: number): string {
+export function valorCurto(v: number): string {
   if (v >= 1000000) return `R$ ${(v / 1000000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
   if (v >= 10000) return `R$ ${(v / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mil`;
   return `R$ ${Math.floor(v).toLocaleString("pt-BR")}`;

@@ -44,8 +44,6 @@ import {
   VICIO_PERIGO,
   CATEGORIAS_LOJA,
   abastecerLoja,
-  compradosDoMercador,
-  vendiveisAoMercador,
   clientesPorHora,
   coletarCaixaLoja,
   demandaCategoria,
@@ -59,7 +57,7 @@ import {
 import { NOME_CATEGORIA, ehConsumivel, itemPorId, itensDaFabrica, type FabricaItem, type ItemDef } from "@/lib/gangstarItens";
 import { TituloComAjuda } from "../TituloComAjuda";
 import { BoateMenu } from "../BoateMenu";
-import { MapaCidade } from "../mapa/MapaCidade";
+import { MapaCidade, type EtiquetaPredio } from "../mapa/MapaCidade";
 import { Cassino } from "./Cassino";
 import { Recrutamento } from "./Recrutamento";
 import { descricaoItem } from "./Inventario";
@@ -118,13 +116,16 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
     rodar(r, r.valor ? `💰 Coletado ${formatarDinheiro(r.valor)} de todos os prédios` : undefined);
   };
 
-  const pendentes: Record<string, boolean> = {};
+  // v1.13: valor acumulado (lojas/renda) ou itens prontos (fabricas) em cima de cada predio
+  const etiquetas: Record<string, EtiquetaPredio | null> = {};
   for (const [id, predio] of Object.entries(save.predios)) {
-    pendentes[id] = ehFabrica(predio.tipo)
-      ? unidadesProntasTotal(predio, save) > 0
+    etiquetas[id] = ehFabrica(predio.tipo)
+      ? { tipo: "itens", valor: unidadesProntasTotal(predio, save) }
       : ehLoja(predio.tipo)
-        ? (predio.caixa ?? 0) > 0
-        : producaoPendente(predio, save) > 0;
+        ? { tipo: "dinheiro", valor: Math.floor(predio.caixa ?? 0) }
+        : PREDIOS[predio.tipo].rendaPorHora > 0
+          ? { tipo: "dinheiro", valor: producaoPendente(predio, save) }
+          : null;
   }
 
   const slotAberto = aberto ? PREDIOS_CIDADE.find((p) => p.id === aberto) ?? null : null;
@@ -154,7 +155,7 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
 
       <MapaCidade
         predios={save.predios}
-        pendentes={pendentes}
+        etiquetas={etiquetas}
         onPredio={(id) => {
           setMensagem(null);
           setAberto(id);
@@ -546,23 +547,15 @@ function PainelLoja({
                 <NotaQualidade q={p.q} />
               </strong>
               <span className="gs-card-sub">
-                {vendiveisAoMercador(save, p.chave) > 0 ? `Vende a ${formatarDinheiro(precoNaLoja(save, p.chave))}` : "Comprado do Mercador: não vai para a prateleira"}
-                {vendiveisAoMercador(save, p.chave) > 0 && compradosDoMercador(save, p.chave) > 0 ? ` (${compradosDoMercador(save, p.chave)} do Mercador fica fora)` : ""}
+                Vende a {formatarDinheiro(precoNaLoja(save, p.chave))}
               </span>
             </div>
             <div className="gs-botoes-mini">
-              <button
-                className="gs-btn-mini"
-                disabled={vendiveisAoMercador(save, p.chave) <= 0}
-                onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, 1), `${p.item.emoji} +1 na prateleira.`)}
-              >
+              <button className="gs-btn-mini" onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, 1), `${p.item.emoji} +1 na prateleira.`)}>
                 +1
               </button>
-              {vendiveisAoMercador(save, p.chave) > 1 && (
-                <button
-                  className="gs-btn-mini"
-                  onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, p.qtd), `${p.item.emoji} +${vendiveisAoMercador(save, p.chave)} na prateleira.`)}
-                >
+              {p.qtd > 1 && (
+                <button className="gs-btn-mini" onClick={() => rodar(abastecerLoja(save, lojaId, p.chave, p.qtd), `${p.item.emoji} +${p.qtd} na prateleira.`)}>
                   Todos
                 </button>
               )}

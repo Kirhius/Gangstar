@@ -48,6 +48,18 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.13.0
+
+- Roubos solo a partir do Golpe do bilhete premiado: +30% de poder exigido e +20% de lucro.
+- Roubos em equipe: Cofre do Hotel Royal e Interceptar Carregamento de Ouro só a partir do nível 23.
+- Fábricas produzem 30% mais rápido, em todos os níveis.
+- Abas do rodapé: Extorsões vem antes de Emboscada.
+- Minha Cidade: em cima de cada prédio seu aparece o dinheiro acumulado (lojas e prédios com renda, em verde) ou os itens prontos das fábricas (📦, em azul claro), como no mapa das Extorsões.
+- Hub: o aviso de evento saiu de baixo do mapa e virou um balão no canto inferior direito ("🚓 Na tocaia • tempo restante"); tocar mostra o efeito.
+- Boate → Garotas: dão força em vez de energia (+1, +2, +4, +8, +13 e +20); a vida e o vício continuam iguais.
+- Itens do Mercador: podem ir para a prateleira das suas lojas e ser consumidos, só não voltam para o Mercador (a marca acompanha o item até na prateleira).
+- Inventário: bebidas, drogas e medicamentos voltam a ter o botão Usar.
+
 ## v1.12.0
 
 - Lojas e fachadas em abas: no topo ficam "Evoluir [valor]" e "Lavar dinheiro" (botões mais baixos). Em "Lavar dinheiro" aparece só a lavagem, e o botão vira "← Loja" para voltar.

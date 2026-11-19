@@ -35,8 +35,9 @@ const SECOES: { id: SecaoBoate; emoji: string; nome: string; sub: string }[] = [
 
 const MSG_OVERDOSE = "🚑 Overdose! Você foi levado ao hospital: 10 minutos internado, R$ 1.000 de taxa e −20 de respeito.";
 
-function efeitos(i: { energia?: number; vida?: number; vicio?: number }): string {
+function efeitos(i: { energia?: number; forca?: number; vida?: number; vicio?: number }): string {
   const partes: string[] = [];
+  if (i.forca) partes.push(`💪+${i.forca} força`);
   if (i.energia) partes.push(`⚡+${i.energia}`);
   if (i.vida) partes.push(`❤️+${i.vida}`);
   if (i.vicio) partes.push(`🌀+${i.vicio}`);

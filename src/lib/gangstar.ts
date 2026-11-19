@@ -71,6 +71,8 @@ export interface PredioInstancia {
   linhas?: { produto?: string; ultimaColeta: number }[];
   // lojas: estoque a venda (chave "id@qualidade"), caixa acumulado e ultima simulacao
   estoque?: Record<string, number>;
+  // v1.13: quantas unidades da prateleira vieram do Mercador (por chave)
+  estoqueMercador?: Record<string, number>;
   caixa?: number;
   ultimaVenda?: number;
   vendidosHoje?: { dia: string; qtd: number };
@@ -471,6 +473,17 @@ export const ROUBOS: Roubo[] = ROUBOS_BASE.map((r) => ({
   dinheiroMax: Math.round((r.dinheiroMax * 0.85) / 5) * 5,
   respeito: Math.max(1, Math.round(r.respeito * 0.85)),
 })).sort((a, b) => a.nivelMin - b.nivelMin || a.dificuldade - b.dificuldade);
+
+// v1.13: a partir do Golpe do bilhete premiado, +30% de poder exigido e +20% de lucro
+{
+  const inicio = ROUBOS.findIndex((r) => r.id === "bilhete");
+  for (let i = Math.max(0, inicio); i < ROUBOS.length; i++) {
+    const r = ROUBOS[i];
+    r.dificuldade = Math.round(r.dificuldade * 1.3);
+    r.dinheiroMin = Math.round((r.dinheiroMin * 1.2) / 5) * 5;
+    r.dinheiroMax = Math.round((r.dinheiroMax * 1.2) / 5) * 5;
+  }
+}
 
 // ---------- Gangues rivais de IA, território e ranking PvE (Fase 3) ----------
 
@@ -1125,7 +1138,7 @@ export const MISSOES_EQUIPE: MissaoEquipe[] = [
     id: "cofre-hotel",
     nome: "Cofre do Hotel Royal",
     emoji: "🏨",
-    nivelMin: 9,
+    nivelMin: 23 /* v1.13 */,
     exigencias: ["hacker", "negociador"],
     energiaCusto: 32,
     dificuldade: 46,
@@ -1140,7 +1153,7 @@ export const MISSOES_EQUIPE: MissaoEquipe[] = [
     id: "carregamento-ouro",
     nome: "Interceptar Carregamento de Ouro",
     emoji: "🪙",
-    nivelMin: 20,
+    nivelMin: 23 /* v1.13 */,
     exigencias: ["motorista", "atirador", "hacker"],
     energiaCusto: 60,
     dificuldade: 96,
@@ -1252,15 +1265,16 @@ export interface EventoDef {
   nome: string;
   emoji: string;
   descricao: string;
+  aviso: string; // v1.13: texto curto do balao no mapa do Hub
 }
 
 export const EVENTOS: EventoDef[] = [
-  { id: "policia-greve", nome: "Polícia em Greve", emoji: "🚨", descricao: "+50% de dinheiro em roubos e missões em equipe." },
-  { id: "batida-boates", nome: "Batida nas Boates", emoji: "🚓", descricao: "Boates mais caras por causa da fiscalização." },
-  { id: "escassez-droga", nome: "Escassez de Drogas", emoji: "💊", descricao: "Fábricas de drogas rendem o triplo." },
-  { id: "promocao-banco", nome: "Promoção do Banco", emoji: "🏦", descricao: "O CDI do banco rende em dobro." },
-  { id: "festa-cidade", nome: "Festa na Cidade", emoji: "🎉", descricao: "As lojas vendem muito mais bebidas e drogas." },
-  { id: "batida-policial", nome: "Batida Policial", emoji: "🚔", descricao: "Clientes somem: lojas vendem menos drogas e armas." },
+  { id: "policia-greve", nome: "Polícia em Greve", emoji: "🚨", aviso: "Greve", descricao: "+50% de dinheiro em roubos e missões em equipe." },
+  { id: "batida-boates", nome: "Batida nas Boates", emoji: "🚓", aviso: "Na tocaia", descricao: "Boates mais caras por causa da fiscalização da polícia." },
+  { id: "escassez-droga", nome: "Escassez de Drogas", emoji: "💊", aviso: "Escassez", descricao: "Fábricas de drogas rendem o triplo." },
+  { id: "promocao-banco", nome: "Promoção do Banco", emoji: "🏦", aviso: "Promoção", descricao: "O CDI do banco rende em dobro." },
+  { id: "festa-cidade", nome: "Festa na Cidade", emoji: "🎉", aviso: "Festa", descricao: "As lojas vendem muito mais bebidas e drogas." },
+  { id: "batida-policial", nome: "Batida Policial", emoji: "🚔", aviso: "Batida", descricao: "Clientes somem: lojas vendem menos drogas e armas." },
 ];
 
 export function eventoEstaAtivo(save: GangstarSave, eventoId: string): boolean {
@@ -2396,8 +2410,11 @@ export function produtoDaFabrica(inst: PredioInstancia): ItemDef | null {
 export function horasPorUnidade(inst: PredioInstancia, save?: GangstarSave): number {
   const item = produtoDaFabrica(inst);
   if (!item) return Infinity;
-  return item.valor / valorProducaoHora(inst, save);
+  // v1.13: fabricacao 30% mais rapida em todos os niveis
+  return (item.valor / valorProducaoHora(inst, save)) * TEMPO_FABRICACAO;
 }
+
+export const TEMPO_FABRICACAO = 0.7;
 
 // quantas unidades prontas (o estoque guarda 12h, e sempre cabe pelo menos 1 unidade)
 export function unidadesProntas(inst: PredioInstancia, save?: GangstarSave): number {
@@ -2551,7 +2568,7 @@ function usarItemBase(save: GangstarSave, idOuChave: string): { save: GangstarSa
   return {
     save: {
       ...save,
-      inventario: retirarDoInventario(save.inventario, idOuChave, 1).inv,
+      ...removerItens(save, [{ id: idOuChave, qtd: 1 }]),
       personagem: {
         ...p,
         energia: Math.min(p.energiaMax, p.energia + (item.energia ?? 0)),
@@ -2587,6 +2604,23 @@ function removerItensQ(save: GangstarSave, itens: { id: string; qtd: number }[])
     qualidades.push(...r.qualidades);
   }
   let novo: GangstarSave = { ...save, inventario: inv };
+  // v1.13: o que sai do inventario (consumo, porto, loja...) gasta primeiro as unidades
+  // compradas do Mercador, para a marca "nao revende ao Mercador" nao passar para outras
+  const revenda = { ...(save.mercador?.revenda ?? {}) };
+  let mexeu = false;
+  for (let i = 0; i < itens.length; i++) {
+    const base = parseChave(itens[i].id).id;
+    const removidas = retirarDoInventario(save.inventario, itens[i].id, itens[i].qtd).qualidades;
+    for (const q of removidas) {
+      const k = chaveItem(base, q);
+      if ((revenda[k] ?? 0) > 0) {
+        revenda[k] -= 1;
+        if (revenda[k] <= 0) delete revenda[k];
+        mexeu = true;
+      }
+    }
+  }
+  if (mexeu) novo = { ...novo, mercador: { ...novo.mercador, revenda } };
   const arma = novo.personagem.armaEquipada;
   if (arma && itemPorId(arma) && qtdItem(novo, arma) <= 0) novo = { ...novo, personagem: { ...novo.personagem, armaEquipada: null } };
   const colete = novo.equipamento.colete;
@@ -2734,7 +2768,9 @@ export function venderAoMercador(save: GangstarSave, chave: string, qtd = 1): { 
   const n = Math.min(qtd, vendiveisAoMercador(save, chave));
   if (n <= 0) return { save, erro: "O Mercador não recompra o que ele mesmo vendeu para você." };
   const valor = precoVendaMercador(item, q) * n;
-  const semItem = removerItens(save, [{ id: chave, qtd: n }]);
+  // so saem unidades de outra origem: a marca das compradas dele continua igual
+  const removido = removerItens(save, [{ id: chave, qtd: n }]);
+  const semItem = { ...removido, mercador: { ...removido.mercador, revenda: save.mercador.revenda } };
   return { save: { ...semItem, personagem: { ...semItem.personagem, dinheiroSujo: sujo(semItem.personagem) + valor } }, valor };
 }
 
@@ -3280,15 +3316,21 @@ export function abastecerLoja(save: GangstarSave, lojaId: string, chave: string,
   if (!inst || !ehLoja(inst.tipo)) return { save, erro: "Essa loja não é sua." };
   const item = itemPorId(parseChave(chave).id);
   if (!item || !CATEGORIAS_LOJA[inst.tipo]!.includes(item.categoria)) return { save, erro: "Essa loja não vende esse tipo de item." };
-  if (qtdItem(save, chave) <= 0) return { save, erro: "Você não tem esse item." };
-  // v1.11: o que foi comprado do Mercador nao vai para a prateleira (era lucro facil)
-  const n = Math.min(qtd, vendiveisAoMercador(save, chave));
-  if (n <= 0) return { save, erro: "Itens comprados do Mercador não podem ser revendidos na loja." };
+  const n = Math.min(qtd, qtdItem(save, chave));
+  if (n <= 0) return { save, erro: "Você não tem esse item." };
+  // v1.13: itens do Mercador tambem vao para a prateleira; a loja guarda quantos vieram
+  // dele para, se voltarem ao inventario, continuarem sem poder ser revendidos a ele
+  const doMercador = Math.min(n, compradosDoMercador(save, chave));
   const base = processarVendasLojas(save);
   const atual = base.predios[lojaId];
   const semItem = removerItens(base, [{ id: chave, qtd: n }]);
   const estoque = { ...(atual.estoque ?? {}), [chave]: (atual.estoque?.[chave] ?? 0) + n };
-  return { save: { ...semItem, predios: { ...semItem.predios, [lojaId]: { ...atual, estoque, ultimaVenda: atual.ultimaVenda ?? Date.now() } } } };
+  const estoqueMercador = { ...(atual.estoqueMercador ?? {}) };
+  // o que ja foi vendido pela loja sai da conta (nunca mais do que o que esta na prateleira)
+  const jaNaPrateleira = Math.min(estoqueMercador[chave] ?? 0, atual.estoque?.[chave] ?? 0);
+  estoqueMercador[chave] = jaNaPrateleira + doMercador;
+  if (estoqueMercador[chave] <= 0) delete estoqueMercador[chave];
+  return { save: { ...semItem, predios: { ...semItem.predios, [lojaId]: { ...atual, estoque, estoqueMercador, ultimaVenda: atual.ultimaVenda ?? Date.now() } } } };
 }
 
 export function recolherDaLoja(save: GangstarSave, lojaId: string, chave: string): { save: GangstarSave; erro?: string } {
@@ -3298,7 +3340,19 @@ export function recolherDaLoja(save: GangstarSave, lojaId: string, chave: string
   if (!inst || n <= 0) return { save, erro: "Esse item não está mais na prateleira." };
   const estoque = { ...inst.estoque };
   delete estoque[chave];
-  return { save: { ...base, inventario: addInventario(base.inventario, chave, n), predios: { ...base.predios, [lojaId]: { ...inst, estoque } } } };
+  const estoqueMercador = { ...(inst.estoqueMercador ?? {}) };
+  const voltam = Math.min(n, estoqueMercador[chave] ?? 0);
+  delete estoqueMercador[chave];
+  const revenda = { ...(base.mercador.revenda ?? {}) };
+  if (voltam > 0) revenda[chave] = (revenda[chave] ?? 0) + voltam;
+  return {
+    save: {
+      ...base,
+      inventario: addInventario(base.inventario, chave, n),
+      mercador: { ...base.mercador, revenda },
+      predios: { ...base.predios, [lojaId]: { ...inst, estoque, estoqueMercador } },
+    },
+  };
 }
 
 export function coletarCaixaLoja(save: GangstarSave, lojaId: string): { save: GangstarSave; erro?: string; valor?: number } {
@@ -4211,7 +4265,7 @@ export function consumirNaBoate(save: GangstarSave, lojaId: string, chave: strin
   const tmp: GangstarSave = { ...save, inventario: addInventario(save.inventario, chave, 1), predios: { ...save.predios, [lojaId]: { ...inst, estoque } } };
   const r = usarItem(tmp, chave);
   if (r.erro) return { save, erro: r.erro };
-  return r;
+  return { ...r, save: { ...r.save, mercador: { ...r.save.mercador, revenda: save.mercador.revenda } } };
 }
 
 // ---------- Qualidade em notas (C, B, A, S, SS) ----------
@@ -4262,19 +4316,19 @@ export interface GarotaDef {
   nome: string;
   emoji: string;
   custo: number;
-  energia: number;
+  forca: number; // v1.13: as garotas dao forca (antes davam energia)
   vida: number;
   vicio: number;
   descricao: string;
 }
 
 export const GAROTAS: GarotaDef[] = [
-  { id: "boneca", nome: "Boneca inflável", emoji: "🎈", custo: 400, energia: 12, vida: 0, vicio: 1, descricao: "Barata e sem conversa." },
-  { id: "garota-barata", nome: "Garota barata", emoji: "💃", custo: 1200, energia: 28, vida: 0, vicio: 3, descricao: "Uma dança e uma bebida no balcão." },
-  { id: "acompanhante", nome: "Acompanhante", emoji: "👠", custo: 2500, energia: 40, vida: 5, vicio: 4, descricao: "Companhia a noite inteira." },
-  { id: "dancarina", nome: "Dançarina exótica", emoji: "🪩", custo: 4500, energia: 55, vida: 10, vicio: 5, descricao: "Show particular na área VIP." },
-  { id: "garota-luxo", nome: "Garota de luxo", emoji: "💎", custo: 8000, energia: 75, vida: 20, vicio: 6, descricao: "Suíte, champanhe e massagem." },
-  { id: "modelo", nome: "Modelo internacional", emoji: "👑", custo: 15000, energia: 100, vida: 35, vicio: 8, descricao: "Só para quem manda na cidade." },
+  { id: "boneca", nome: "Boneca inflável", emoji: "🎈", custo: 400, forca: 1, vida: 0, vicio: 1, descricao: "Barata e sem conversa." },
+  { id: "garota-barata", nome: "Garota barata", emoji: "💃", custo: 1200, forca: 2, vida: 0, vicio: 3, descricao: "Uma dança e uma bebida no balcão." },
+  { id: "acompanhante", nome: "Acompanhante", emoji: "👠", custo: 2500, forca: 4, vida: 5, vicio: 4, descricao: "Companhia a noite inteira." },
+  { id: "dancarina", nome: "Dançarina exótica", emoji: "🪩", custo: 4500, forca: 8, vida: 10, vicio: 5, descricao: "Show particular na área VIP." },
+  { id: "garota-luxo", nome: "Garota de luxo", emoji: "💎", custo: 8000, forca: 13, vida: 20, vicio: 6, descricao: "Suíte, champanhe e massagem." },
+  { id: "modelo", nome: "Modelo internacional", emoji: "👑", custo: 15000, forca: 20, vida: 35, vicio: 8, descricao: "Só para quem manda na cidade." },
 ];
 
 export function itensSecaoBoate(secao: SecaoBoate): ItemDef[] {
@@ -4304,7 +4358,8 @@ export function consumirItemBoate(save: GangstarSave, itemId: string): { save: G
   const tmp: GangstarSave = { ...save, inventario: addInventario(save.inventario, chave, 1) };
   const r = usarItem(tmp, chave);
   if (r.erro) return { save, erro: r.erro };
-  return { ...r, save: { ...r.save, personagem: { ...pagarComSujo(r.save.personagem, preco) } } };
+  // a unidade comprada aqui e consumida na hora: nao mexe na marca dos itens do Mercador
+  return { ...r, save: { ...r.save, mercador: { ...r.save.mercador, revenda: save.mercador.revenda }, personagem: { ...pagarComSujo(r.save.personagem, preco) } } };
 }
 
 export function contratarGarota(save: GangstarSave, garotaId: string, naPropriaBoate = false): { save: GangstarSave; erro?: string; overdose?: boolean } {
@@ -4313,14 +4368,13 @@ export function contratarGarota(save: GangstarSave, garotaId: string, naPropriaB
   const p = save.personagem;
   if (p.preso) return { save, erro: msgBloqueado(p) };
   const custo = custoGarota(save, g, naPropriaBoate);
-  if (p.energia >= p.energiaMax && p.vida >= p.vidaMax) return { save, erro: "Sua energia e sua vida já estão cheias." };
   if (p.vicio + g.vicio > VICIO_MAX) return { save, erro: "Você está intoxicado demais." };
   if (saldoAceitandoSujo(p) < custo) return { save, erro: "Dinheiro insuficiente." };
   const novo: GangstarSave = {
     ...save,
     personagem: {
       ...pagarComSujo(p, custo),
-      energia: Math.min(p.energiaMax, p.energia + g.energia),
+      atributos: { ...p.atributos, forca: p.atributos.forca + g.forca },
       vida: Math.min(p.vidaMax, p.vida + g.vida),
       vicio: Math.min(VICIO_MAX, p.vicio + g.vicio),
     },

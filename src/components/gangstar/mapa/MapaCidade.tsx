@@ -13,6 +13,11 @@ import { PREDIOS, PREDIOS_CIDADE, type PredioInstancia } from "@/lib/gangstar";
 import { BotaoOlho, TagsMapa } from "./TagsMapa";
 import { CamadaPeriodo } from "./periodo";
 import { CAMADAS_MAPA, MAPA_H, MAPA_W } from "./camadasMapa";
+import { valorCurto } from "./MapaExtorsoes";
+
+// v1.13: etiqueta em cima de cada predio seu - dinheiro acumulado (lojas e predios com renda,
+// em verde) ou itens prontos (fabricas, em azul claro), como no mapa das Extorsoes.
+export type EtiquetaPredio = { tipo: "dinheiro" | "itens"; valor: number };
 
 const BASE = "/gangstar/cidade";
 // v4.63.1: arte nova da cidade (muda o ?v para o celular nao usar a imagem antiga do cache)
@@ -20,11 +25,11 @@ const VERSAO_ARTE = "2";
 
 export function MapaCidade({
   predios,
-  pendentes,
+  etiquetas,
   onPredio,
 }: {
   predios: Record<string, PredioInstancia>;
-  pendentes: Record<string, boolean>;
+  etiquetas: Record<string, EtiquetaPredio | null>;
   onPredio: (predioId: string) => void;
 }) {
   const daTrasPraFrente = [...CAMADAS_MAPA].reverse();
@@ -64,14 +69,29 @@ export function MapaCidade({
         })}
 
         {CAMADAS_MAPA.map((c) => {
-          if (!predios[c.id] || !pendentes[c.id]) return null;
-          const cx = c.predio.x + c.predio.w / 2;
-          const cy = c.predio.y + 26;
+          const et = predios[c.id] ? etiquetas[c.id] : null;
+          if (!et) return null;
+          const itens = et.tipo === "itens";
+          const texto = itens ? `📦 ${et.valor}` : valorCurto(et.valor);
+          const larg = texto.length * 15 + 26;
+          const cx = Math.max(larg / 2 + 4, Math.min(MAPA_W - larg / 2 - 4, c.predio.x + c.predio.w / 2));
+          // no canto superior direito fica o botao do olho
+          const cy = cx > MAPA_W - 230 && c.predio.y + 26 < 120 ? 120 : Math.max(26, c.predio.y + 26);
+          const ativo = et.valor > 0;
           return (
-            <g key={`moeda-${c.id}`} className="gs-mapa-moeda" pointerEvents="none">
-              <circle cx={cx} cy={cy} r={22} fill="#1a3a24" stroke="#4caf7a" strokeWidth={5} />
-              <text x={cx} y={cy + 10} textAnchor="middle" fontSize={28} fontWeight={700} fill="#7de8a3">
-                $
+            <g key={`et-${c.id}`} className={ativo ? "gs-mapa-valor gs-mapa-moeda" : "gs-mapa-valor"} pointerEvents="none">
+              <rect
+                x={cx - larg / 2}
+                y={cy - 21}
+                width={larg}
+                height={40}
+                rx={12}
+                fill={itens ? "#0f2a3a" : "#123222"}
+                stroke={itens ? "#5cc8ff" : "#4caf7a"}
+                strokeWidth={4}
+              />
+              <text x={cx} y={cy + 9} textAnchor="middle" fontSize={26} fontWeight={700} fill={itens ? (ativo ? "#9fe3ff" : "#7fb3c9") : ativo ? "#7de8a3" : "#8fbfa0"}>
+                {texto}
               </text>
             </g>
           );

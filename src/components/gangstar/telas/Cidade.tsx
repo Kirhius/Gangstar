@@ -47,6 +47,12 @@ function formatarDinheiro(v: number): string {
   return `R$ ${v.toLocaleString("pt-BR")}`;
 }
 
+// "2h 16min", "45 min"
+function tempoEvento(ate: number): string {
+  const min = Math.max(0, Math.ceil((ate - Date.now()) / 60000));
+  return min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, "0")}min` : `${min} min`;
+}
+
 function tempoRestante(ate: number): string {
   const ms = Math.max(0, ate - Date.now());
   const min = Math.floor(ms / 60000);
@@ -67,6 +73,7 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [valorBanco, setValorBanco] = useState("");
   const [resultado, setResultado] = useState<ResultadoPopup | null>(null);
+  const [eventoAberto, setEventoAberto] = useState(false);
   const [mercadorAberto, setMercadorAberto] = useState(false);
   const [, setTique] = useState(0);
   // atualiza a cada 30s para o botao do Mercador aparecer/sumir na hora certa
@@ -431,11 +438,22 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
           setVisao(local);
         }}
         extra={
-          mercadorAtual() && p.nivel >= NIVEL_MERCADOR ? (
-            <button className="gs-mercador-botao" onClick={() => setMercadorAberto(true)}>
-              <span>🧳</span> Mercador
-            </button>
-          ) : null
+          // v1.13: canto inferior direito do mapa - aviso do evento (toque mostra o efeito) e o Mercador
+          <div className="gs-mapa-cantos">
+            {eventoAtualView(save) && (
+              <>
+                {eventoAberto && <div className="gs-evento-balao-texto">{eventoAtualView(save)!.def.descricao}</div>}
+                <button className="gs-evento-balao" onClick={() => setEventoAberto((v) => !v)}>
+                  {eventoAtualView(save)!.def.emoji} {eventoAtualView(save)!.def.aviso} • {tempoEvento(eventoAtualView(save)!.expiraEm)}
+                </button>
+              </>
+            )}
+            {mercadorAtual() && p.nivel >= NIVEL_MERCADOR && (
+              <button className="gs-mercador-botao" onClick={() => setMercadorAberto(true)}>
+                <span>🧳</span> Mercador
+              </button>
+            )}
+          </div>
         }
       />
       {!mercadorAtual() && (
@@ -445,11 +463,6 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
       )}
       {mercadorAberto && <MercadorPainel save={save} aoAtualizar={aoAtualizar} aoFechar={() => setMercadorAberto(false)} />}
 
-      {eventoAtualView(save) && (
-        <div className="gs-aviso gs-aviso-evento">
-          {eventoAtualView(save)!.def.emoji} <strong>{eventoAtualView(save)!.def.nome}</strong> — {eventoAtualView(save)!.def.descricao}
-        </div>
-      )}
 
       {p.preso?.hospital && (
         <div className="gs-card gs-card-prisao">

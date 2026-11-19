@@ -48,8 +48,8 @@ const ABAS: { id: Aba; emoji: string; rotulo: string }[] = [
   { id: "gangue", emoji: "🏴", rotulo: "Gangue" },
   { id: "missoes", emoji: "📜", rotulo: "Missões" },
   { id: "porto", emoji: "⚓", rotulo: "Porto" },
-  { id: "emboscada", emoji: "🗡️", rotulo: "Emboscada" },
   { id: "extorsoes", emoji: "💼", rotulo: "Extorsões" },
+  { id: "emboscada", emoji: "🗡️", rotulo: "Emboscada" },
   { id: "inventario", emoji: "🎒", rotulo: "Inventário" },
   { id: "perfil", emoji: "👤", rotulo: "Perfil" },
 ];
