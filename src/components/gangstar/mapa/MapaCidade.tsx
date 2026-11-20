@@ -27,10 +27,12 @@ export function MapaCidade({
   predios,
   etiquetas,
   onPredio,
+  extra,
 }: {
   predios: Record<string, PredioInstancia>;
   etiquetas: Record<string, EtiquetaPredio | null>;
   onPredio: (predioId: string) => void;
+  extra?: React.ReactNode;
 }) {
   const daTrasPraFrente = [...CAMADAS_MAPA].reverse();
   const [nomes, setNomes] = useState(false);
@@ -38,6 +40,7 @@ export function MapaCidade({
   return (
     <div className="gs-mapa-wrap">
       <BotaoOlho visivel={nomes} alternar={() => setNomes((v) => !v)} />
+      {extra && <div className="gs-mapa-cantos">{extra}</div>}
       <svg viewBox={`0 0 ${MAPA_W} ${MAPA_H}`} className="gs-mapa-svg" role="img" aria-label="Mapa da sua cidade">
         <image href={`${BASE}/cidade-base.webp?v=${VERSAO_ARTE}`} x={0} y={0} width={MAPA_W} height={MAPA_H} />
 

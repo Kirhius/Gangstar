@@ -20,6 +20,7 @@ import {
 } from "@/lib/gangstar";
 import { TituloComAjuda } from "../TituloComAjuda";
 import { PopupResultado, type ResultadoPopup } from "../PopupResultado";
+import { AvisoBuff } from "../AvisoBuff";
 import { MapaExtorsoes, type EstadoAlvoExtorsao } from "../mapa/MapaExtorsoes";
 
 function formatarDinheiro(v: number): string {
@@ -90,7 +91,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
         }
       />
       {mensagem && <div className="gs-aviso">{mensagem}</div>}
-      <MapaExtorsoes estados={estados} onLocal={setAberto} />
+      <MapaExtorsoes estados={estados} onLocal={setAberto} extra={<AvisoBuff save={save} tipos={["extorsao"]} noMapa />} />
       <div className="gs-lista">
         {EXTORSOES.map((e) => {
           const meu = !!save.extorsoes[e.id];

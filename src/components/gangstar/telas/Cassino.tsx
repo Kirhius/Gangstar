@@ -1,8 +1,8 @@
 "use client";
 
 // Gangstar: Cassino (aberto pela Boate do Hub e pela sua boate na Minha Cidade).
-// Quatro jogos: Roleta, Blackjack, Caca-niquel (com jackpot acumulado) e Poker Texas
-// Hold'em contra 2 IAs, mais o torneio diario de poker e o agiota para quem quebrar.
+// Quatro jogos: Roleta, Blackjack, Caca-niquel (com jackpot acumulado) e Poker em mesas
+// (sit & go contra IAs, v1.15), mais o torneio diario de poker e o agiota para quem quebrar.
 // As apostas saem do dinheiro em maos do personagem.
 
 import { useEffect, useRef, useState } from "react";
@@ -25,7 +25,13 @@ import {
   torneioDeHoje,
   type GangstarSave,
   saldoAceitandoSujo,
+  fimMaoPoker,
+  sairMesaPoker,
+  sentarMesaPoker,
+  marcarApostaPoker,
+  abandonarMaoPoker,
 } from "@/lib/gangstar";
+import { PokerMesa } from "../PokerMesa";
 import {
   SIMBOLOS_SLOT,
   TABELA_SLOT,
@@ -164,12 +170,37 @@ export function Cassino({ save, aoAtualizar, aoVoltar }: { save: GangstarSave; a
         ))}
       </div>
 
-      {jogo !== "torneio" && <SeletorAposta aposta={aposta} setAposta={setAposta} dinheiro={dinheiro} />}
+      {jogo !== "torneio" && jogo !== "poker" && <SeletorAposta aposta={aposta} setAposta={setAposta} dinheiro={dinheiro} />}
 
       {jogo === "roleta" && <Roleta aposta={aposta} dinheiro={dinheiro} mexer={mexerDinheiro} />}
       {jogo === "blackjack" && <Blackjack aposta={aposta} dinheiro={dinheiro} mexer={mexerDinheiro} />}
       {jogo === "slot" && <CacaNiquel aposta={aposta} dinheiro={dinheiro} mexer={mexerDinheiro} save={save} aplicar={aplicar} />}
-      {jogo === "poker" && <Poker aposta={aposta} dinheiro={dinheiro} mexer={mexerDinheiro} />}
+      {jogo === "poker" && (
+        <PokerMesa
+          save={save}
+          sentar={(valor) => {
+            const r = sentarMesaPoker(saveRef.current, valor);
+            if (!r.erro) aplicar(() => r.save);
+            return r.erro;
+          }}
+          levantar={() => {
+            const r = sairMesaPoker(saveRef.current);
+            aplicar(() => r.save);
+            return r.valor;
+          }}
+          marcarAposta={(meu) => aplicar((s) => marcarApostaPoker(s, meu))}
+          abandonar={() => {
+            const r = abandonarMaoPoker(saveRef.current);
+            if (r.perdeu > 0) aplicar(() => r.save);
+            return r;
+          }}
+          aoFimMao={(fichas, fichasIas) => {
+            const r = fimMaoPoker(saveRef.current, fichas, fichasIas);
+            aplicar(() => r.save);
+            return r;
+          }}
+        />
+      )}
       {jogo === "torneio" && <Torneio save={save} aplicar={aplicar} />}
     </div>
   );

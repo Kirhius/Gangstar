@@ -4,6 +4,7 @@
 // taxa de 40%, limite por dia (cresce com o nivel) e o dobro de alerta da Federal.
 // v1.9.2: ilustracao em faixa 3:1 no topo; texto e botoes embaixo.
 
+import { AvisoBuff } from "../AvisoBuff";
 import { IlustracaoLavanderia } from "../IlustracaoServico";
 import { useState } from "react";
 import {
@@ -46,6 +47,7 @@ export function Lavanderia({ save, aoAtualizar }: { save: GangstarSave; aoAtuali
   return (
     <div className="gs-lista">
       <IlustracaoLavanderia />
+      <AvisoBuff save={save} tipos={["lavagem"]} />
       <p className="gs-p-intro">
         O dono não faz perguntas: entrega dinheiro limpo na hora, sem você precisar de fachada. Mas fica com {Math.round(TAXA_LAVANDERIA * 100)}%, tem limite por dia e a
         Federal fica de olho (o alerta sobe o dobro das fachadas).

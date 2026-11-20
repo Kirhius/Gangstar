@@ -48,6 +48,13 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.15.0
+
+- Boate (Hub e a sua): o botão do Cassino fica acima de Bebidas, Drogas e Garotas.
+- Poker em mesas (sit & go): R$ 50 contra 1 jogador, R$ 100 contra 2, R$ 500 contra 3, R$ 1k contra 4 e R$ 5k contra 6. Todos começam com fichas iguais ao valor da mesa, separadas do seu dinheiro. Perdeu tudo, acabou; levantou da mesa, as fichas voltam em reais; quebrou todos os rivais, é campeão e ganha um item especial (qualquer raridade). All-in e potes paralelos; a entrada sobe a cada 6 mãos. Sair no meio de uma mão faz perder o que já tinha apostado nela.
+- Sua boate → Garotas: cada uma precisa ser liberada uma vez (o triplo do preço de lá) e depois sai pela metade.
+- Itens especiais: o bônus do item equipado aparece na tela em que ele age, com a cor da raridade (Extorsões e Minha Cidade no canto inferior direito do mapa; Roubos, Emboscada e Lavanderia no topo).
+
 ## v1.14.0
 
 - Loja de armas: arma, colete ou item raro equipado não vai para a prateleira (desequipe no Perfil antes).

@@ -4,6 +4,7 @@
 // com os bandidos do Ponto de Recrutamento (v4.61). O resultado de cada tentativa
 // aparece num popup central, não mais como aviso no topo da página.
 
+import { AvisoBuff } from "../AvisoBuff";
 import { useState } from "react";
 import {
   ALERTA_PERIGO,
@@ -117,6 +118,7 @@ export function Roubos({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
     <div className="gs-pagina">
       <h2 className="gs-h2">🎯 Roubos</h2>
       <p className="gs-p-intro">Seu poder atual: {poder}</p>
+      <AvisoBuff save={save} tipos={["poder", "respeito", "prisao"]} />
       {suspeitaAtual(save) > ALERTA_PERIGO && (
         <div className="gs-aviso">🚨 Alerta da Federal acima de {ALERTA_PERIGO}% ({suspeitaAtual(save)}%): +5% de chance de prisão nos roubos até baixar.</div>
       )}

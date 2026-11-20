@@ -33,6 +33,7 @@ import {
 import { itemPorId } from "@/lib/gangstarItens";
 import { AlvosReais } from "../AlvosReais";
 import { RankingEmboscada } from "../RankingEmboscada";
+import { AvisoBuff } from "../AvisoBuff";
 import { PopupResultado, type ResultadoPopup } from "../PopupResultado";
 
 function formatarDinheiro(v: number): string {
@@ -118,6 +119,7 @@ export function Emboscada({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
   return (
     <div className="gs-pagina">
       <h2 className="gs-h2">🗡️ Emboscada</h2>
+      <AvisoBuff save={save} tipos={["emboscada", "poder"]} />
       <p className="gs-p-intro">
         Seu poder de ataque: <strong>{emGrupo ? poderEmboscadaGrupo(save) : poderEmboscada(save)}</strong> (você + armas + colete + gangue). Cada emboscada gasta ⚡{energiaEmboscada()} e de ❤️40 a ❤️60 (alvo mais forte custa mais). Cada alvo cai uma vez por semana; novos alvos em{" "}
         {tempoNovosAlvos()}.

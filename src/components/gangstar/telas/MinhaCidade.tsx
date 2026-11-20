@@ -58,6 +58,7 @@ import {
 import { NOME_CATEGORIA, ehConsumivel, itemPorId, itensDaFabrica, type FabricaItem, type ItemDef } from "@/lib/gangstarItens";
 import { TituloComAjuda } from "../TituloComAjuda";
 import { BoateMenu } from "../BoateMenu";
+import { AvisoBuff } from "../AvisoBuff";
 import { MapaCidade, type EtiquetaPredio } from "../mapa/MapaCidade";
 import { Cassino } from "./Cassino";
 import { Recrutamento } from "./Recrutamento";
@@ -157,6 +158,7 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
       <MapaCidade
         predios={save.predios}
         etiquetas={etiquetas}
+        extra={<AvisoBuff save={save} tipos={["lavagem"]} noMapa />}
         onPredio={(id) => {
           setMensagem(null);
           setAberto(id);
@@ -405,22 +407,21 @@ export function MinhaCidade({ save, aoAtualizar }: { save: GangstarSave; aoAtual
                 {abaPredio === "principal" && instAberta.tipo === "boate" && (
                   <>
                     <h3 className="gs-h3">🪩 Curtir na sua boate</h3>
+                    {/* v1.15: o Cassino fica acima de Bebidas, Drogas e Garotas */}
+                    <button
+                      className="gs-btn gs-btn-cassino gs-btn-bloco"
+                      onClick={() => {
+                        setAberto(null);
+                        setNoCassino(true);
+                      }}
+                    >
+                      🎰 Cassino
+                    </button>
                     <BoateMenu save={save} aoAtualizar={aoAtualizar} lojaId={aberto} />
                   </>
                 )}
                 {abaPredio === "principal" && ehLoja(instAberta.tipo) && (
                   <PainelLoja save={save} lojaId={aberto} rodar={(r, msg) => rodar(r, msg, false)} />
-                )}
-                {abaPredio === "principal" && instAberta.tipo === "boate" && (
-                  <button
-                    className="gs-btn gs-btn-cassino gs-btn-bloco"
-                    onClick={() => {
-                      setAberto(null);
-                      setNoCassino(true);
-                    }}
-                  >
-                    🎰 Cassino
-                  </button>
                 )}
               </>
             )}

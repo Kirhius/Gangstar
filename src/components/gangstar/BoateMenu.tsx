@@ -14,6 +14,9 @@ import {
   consumirNaBoate,
   contratarGarota,
   custoGarota,
+  custoLiberarGarota,
+  garotaLiberada,
+  liberarGarota,
   estoqueBoatePorSecao,
   itensSecaoBoate,
   precoNaBoate,
@@ -30,7 +33,7 @@ function formatarDinheiro(v: number): string {
 const SECOES: { id: SecaoBoate; emoji: string; nome: string; sub: string }[] = [
   { id: "bebidas", emoji: "🍸", nome: "Bebidas", sub: "energia" },
   { id: "drogas", emoji: "💊", nome: "Drogas", sub: "energia e vida" },
-  { id: "garotas", emoji: "💃", nome: "Garotas", sub: "energia e vida" },
+  { id: "garotas", emoji: "💃", nome: "Garotas", sub: "força e vida" },
 ];
 
 const MSG_OVERDOSE = "🚑 Overdose! Você foi levado ao hospital: 10 minutos internado, R$ 1.000 de taxa e −20 de respeito.";
@@ -146,6 +149,9 @@ export function BoateMenu({
         <div className="gs-lista">
           {GAROTAS.map((g) => {
             const custo = custoGarota(save, g, propria);
+            // v1.15: na sua boate cada garota e liberada uma vez (3x o preco) e depois sai pela metade
+            const bloqueada = propria && !garotaLiberada(save, g.id);
+            const custoLiberar = custoLiberarGarota(save, g);
             return (
               <div key={g.id} className="gs-card">
                 <span className="gs-card-emoji">{g.emoji}</span>
@@ -155,14 +161,27 @@ export function BoateMenu({
                     {g.descricao} {efeitos(g)}
                   </span>
                 </div>
-                <button className="gs-btn-mini gs-btn-boate" disabled={!!p.preso || saldoAceitandoSujo(p) < custo} onClick={() => rodar(contratarGarota(save, g.id, propria), `${g.emoji} ${g.nome}: ${efeitos(g)}`)}>
-                  Contratar
-                  <small>{formatarDinheiro(custo)}</small>
-                </button>
+                {bloqueada ? (
+                  <button
+                    className="gs-btn-mini gs-btn-boate"
+                    disabled={saldoAceitandoSujo(p) < custoLiberar}
+                    onClick={() => rodar(liberarGarota(save, g.id), `🔓 ${g.emoji} ${g.nome} agora trabalha na sua boate.`)}
+                  >
+                    🔓 Liberar
+                    <small>{formatarDinheiro(custoLiberar)}</small>
+                  </button>
+                ) : (
+                  <button className="gs-btn-mini gs-btn-boate" disabled={!!p.preso || saldoAceitandoSujo(p) < custo} onClick={() => rodar(contratarGarota(save, g.id, propria), `${g.emoji} ${g.nome}: ${efeitos(g)}`)}>
+                    Contratar
+                    <small>{formatarDinheiro(custo)}</small>
+                  </button>
+                )}
               </div>
             );
           })}
-          {propria && <p className="gs-dica">Na sua boate as garotas saem 30% mais baratas.</p>}
+          {propria && (
+            <p className="gs-dica">Na sua boate cada garota precisa ser liberada uma vez (o triplo do preço daqui). Depois de liberada, ela sai pela metade.</p>
+          )}
         </div>
       )}
     </div>

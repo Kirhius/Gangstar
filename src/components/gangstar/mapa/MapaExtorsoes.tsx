@@ -46,11 +46,20 @@ function centro(pol: [number, number][]): [number, number] {
   return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
 }
 
-export function MapaExtorsoes({ estados, onLocal }: { estados: Record<string, EstadoAlvoExtorsao>; onLocal: (id: string) => void }) {
+export function MapaExtorsoes({
+  estados,
+  onLocal,
+  extra,
+}: {
+  estados: Record<string, EstadoAlvoExtorsao>;
+  onLocal: (id: string) => void;
+  extra?: React.ReactNode;
+}) {
   const [nomes, setNomes] = useState(false);
   return (
     <div className="gs-mapa-wrap">
       <BotaoOlho visivel={nomes} alternar={() => setNomes((v) => !v)} />
+      {extra && <div className="gs-mapa-cantos">{extra}</div>}
       <svg viewBox={`0 0 ${W} ${H}`} className="gs-mapa-svg" role="img" aria-label="Mapa do bairro das extorsões">
         <image href="/gangstar/extorsoes/bairro.webp" x={0} y={0} width={W} height={H} />
         <CamadaPeriodo w={W} h={H} />

@@ -196,6 +196,10 @@ export interface GangstarSave {
   extorsoes: Record<string, ExtorsaoInstancia>;
   // v1.14: estabelecimentos perdidos num flagrante (id -> dia da perda); so voltam no dia seguinte
   extorsoesPerdidas?: Record<string, string>;
+  // v1.15: garotas liberadas na sua boate
+  garotasLiberadas?: string[];
+  // v1.15: mesa de poker (sit & go) em andamento: fichas separadas do dinheiro
+  pokerMesa?: MesaPoker | null;
   bandidos: Bandido[];
   // historico de mortes, prisoes e traicoes dos bandidos (mais recente primeiro)
   registroGangue: OcorrenciaGangue[];
@@ -4376,7 +4380,29 @@ export function precoNaBoate(save: GangstarSave, item: ItemDef): number {
 // na sua propria boate as garotas saem 30% mais baratas
 export function custoGarota(save: GangstarSave, g: GarotaDef, naPropriaBoate: boolean): number {
   const batida = eventoEstaAtivo(save, "batida-boates") ? 1.5 : 1;
-  return Math.round((g.custo * batida * (naPropriaBoate ? 0.7 : 1)) / 10) * 10;
+  const base = Math.round((g.custo * batida * (naPropriaBoate ? 0.7 : 1)) / 10) * 10;
+  // v1.15: na sua boate, depois de liberada, ela sai pela metade
+  return naPropriaBoate && garotaLiberada(save, g.id) ? Math.round(base / 2 / 10) * 10 : base;
+}
+
+// v1.15: na sua boate cada garota precisa ser liberada uma vez (o triplo do preco de la)
+export function garotaLiberada(save: GangstarSave, id: string): boolean {
+  return (save.garotasLiberadas ?? []).includes(id);
+}
+
+export function custoLiberarGarota(save: GangstarSave, g: GarotaDef): number {
+  const batida = eventoEstaAtivo(save, "batida-boates") ? 1.5 : 1;
+  return Math.round((g.custo * batida * 0.7) / 10) * 10 * 3;
+}
+
+export function liberarGarota(save: GangstarSave, garotaId: string): { save: GangstarSave; erro?: string } {
+  const g = GAROTAS.find((x) => x.id === garotaId);
+  if (!g) return { save, erro: "Opção inválida." };
+  if (garotaLiberada(save, g.id)) return { save, erro: "Ela já trabalha na sua boate." };
+  const custo = custoLiberarGarota(save, g);
+  const p = save.personagem;
+  if (saldoAceitandoSujo(p) < custo) return { save, erro: "Dinheiro insuficiente." };
+  return { save: { ...save, personagem: pagarComSujo(p, custo), garotasLiberadas: [...(save.garotasLiberadas ?? []), g.id] } };
 }
 
 // compra e consome na hora (boate do Hub)
@@ -4398,6 +4424,7 @@ export function contratarGarota(save: GangstarSave, garotaId: string, naPropriaB
   if (!g) return { save, erro: "Opção inválida." };
   const p = save.personagem;
   if (p.preso) return { save, erro: msgBloqueado(p) };
+  if (naPropriaBoate && !garotaLiberada(save, g.id)) return { save, erro: "Libere essa garota na sua boate primeiro." };
   const custo = custoGarota(save, g, naPropriaBoate);
   if (p.vicio + g.vicio > VICIO_MAX) return { save, erro: "Você está intoxicado demais." };
   if (saldoAceitandoSujo(p) < custo) return { save, erro: "Dinheiro insuficiente." };
@@ -5340,4 +5367,128 @@ export function qtdNaoEquipada(save: GangstarSave, chave: string): number {
     .filter((k) => parseChave(k).id === id && (save.inventario[k] ?? 0) > 0)
     .sort((a, b) => parseChave(b).q - parseChave(a).q)[0];
   return melhor === chave ? Math.max(0, total - 1) : total;
+}
+
+// =====================================================================================
+// v1.15: Poker em mesas (sit & go). Cada mesa tem um valor de entrada e um numero de
+// jogadores de IA; todos comecam com fichas iguais ao valor da mesa. As fichas ficam
+// separadas do dinheiro: perder tudo encerra o jogo; sair devolve as fichas em reais;
+// quebrar todos os rivais faz voce campeao (fichas + um item especial).
+// =====================================================================================
+
+export const MESAS_POKER = [
+  { valor: 50, oponentes: 1 },
+  { valor: 100, oponentes: 2 },
+  { valor: 500, oponentes: 3 },
+  { valor: 1000, oponentes: 4 },
+  { valor: 5000, oponentes: 6 },
+] as const;
+
+export interface JogadorMesaPoker {
+  nome: string;
+  emoji: string;
+  fichas: number;
+}
+
+export interface MesaPoker {
+  valor: number;
+  fichas: number;
+  ias: JogadorMesaPoker[];
+  maos: number;
+  inicio: number;
+  // fichas que voce ja pos na mao em andamento (se sair no meio, perde)
+  emJogo?: number;
+}
+
+const RIVAIS_POKER: { nome: string; emoji: string }[] = [
+  { nome: "Don Corvo", emoji: "🎩" },
+  { nome: "Lady Ás", emoji: "💄" },
+  { nome: "Zé Blefe", emoji: "🃏" },
+  { nome: "Tia Fichinha", emoji: "👵" },
+  { nome: "Russo", emoji: "🧔" },
+  { nome: "Doutor Royal", emoji: "🕶️" },
+  { nome: "Marreta", emoji: "🔨" },
+  { nome: "Baronesa", emoji: "👑" },
+  { nome: "Kid Flush", emoji: "🧢" },
+];
+
+export function mesaPoker(save: GangstarSave): MesaPoker | null {
+  return save.pokerMesa ?? null;
+}
+
+// ante sobe a cada 6 maos para a mesa nao durar para sempre
+export function antePoker(m: MesaPoker): number {
+  return Math.max(1, Math.round(m.valor * 0.05)) * 2 ** Math.floor(m.maos / 6);
+}
+
+export function sentarMesaPoker(save: GangstarSave, valor: number): { save: GangstarSave; erro?: string } {
+  if (save.pokerMesa) return { save, erro: "Você já está numa mesa." };
+  const mesa = MESAS_POKER.find((m) => m.valor === valor);
+  if (!mesa) return { save, erro: "Mesa inválida." };
+  const p = save.personagem;
+  if (p.dinheiro < valor) return { save, erro: "Dinheiro insuficiente para sentar nessa mesa." };
+  const nomes = [...RIVAIS_POKER].sort(() => Math.random() - 0.5).slice(0, mesa.oponentes);
+  return {
+    save: {
+      ...save,
+      personagem: { ...p, dinheiro: p.dinheiro - valor },
+      pokerMesa: { valor, fichas: valor, ias: nomes.map((n) => ({ ...n, fichas: valor })), maos: 0, inicio: Date.now() },
+    },
+  };
+}
+
+// grava as fichas depois de cada mao e ve se o jogo acabou
+export function fimMaoPoker(
+  save: GangstarSave,
+  fichas: number,
+  fichasIas: number[],
+): { save: GangstarSave; fim?: "eliminado" | "campeao"; item?: ItemDef; ganho?: number } {
+  const m = save.pokerMesa;
+  if (!m) return { save };
+  const ias = m.ias.map((ia, i) => ({ ...ia, fichas: Math.max(0, Math.round(fichasIas[i] ?? ia.fichas)) }));
+  const minhas = Math.max(0, Math.round(fichas));
+  if (minhas <= 0) {
+    return { save: anotar({ ...save, pokerMesa: null }, { emoji: "♠️", texto: `Poker (mesa de R$ ${m.valor.toLocaleString("pt-BR")}): eliminado`, valor: -m.valor, ok: false }), fim: "eliminado" };
+  }
+  if (ias.every((ia) => ia.fichas <= 0)) {
+    const item = ITENS_RAROS[Math.floor(Math.random() * ITENS_RAROS.length)];
+    let novo: GangstarSave = {
+      ...save,
+      pokerMesa: null,
+      personagem: { ...save.personagem, dinheiro: save.personagem.dinheiro + minhas },
+      inventario: addInventario(save.inventario, chaveItem(item.id, 1), 1),
+    };
+    novo = contar(contarVitoriaCassino(novo), "itensRaros");
+    novo = anotar(novo, { emoji: "🏆", texto: `Campeão da mesa de poker de R$ ${m.valor.toLocaleString("pt-BR")} · ${item.emoji} ${item.nome}`, valor: minhas - m.valor, ok: true });
+    return { save: novo, fim: "campeao", item, ganho: minhas };
+  }
+  return { save: { ...save, pokerMesa: { ...m, fichas: minhas, ias, maos: m.maos + 1, emJogo: 0 } } };
+}
+
+export function marcarApostaPoker(save: GangstarSave, meu: number): GangstarSave {
+  const m = save.pokerMesa;
+  if (!m || (m.emJogo ?? 0) === meu) return save;
+  return { ...save, pokerMesa: { ...m, emJogo: meu } };
+}
+
+// saiu da tela no meio de uma mao: perde o que ja tinha apostado nela (vai para um rival)
+export function abandonarMaoPoker(save: GangstarSave): { save: GangstarSave; perdeu: number; fim?: "eliminado" } {
+  const m = save.pokerMesa;
+  if (!m || !m.emJogo) return { save, perdeu: 0 };
+  const perdeu = Math.min(m.fichas, m.emJogo);
+  const alvo = m.ias.findIndex((ia) => ia.fichas > 0);
+  const ias = m.ias.map((ia, i) => (i === alvo ? { ...ia, fichas: ia.fichas + perdeu } : ia));
+  const r = fimMaoPoker({ ...save, pokerMesa: { ...m, emJogo: 0 } }, m.fichas - perdeu, ias.map((ia) => ia.fichas));
+  return { save: r.save, perdeu, fim: r.fim === "eliminado" ? "eliminado" : undefined };
+}
+
+// levantar da mesa: as fichas voltam como dinheiro
+export function sairMesaPoker(save: GangstarSave): { save: GangstarSave; valor: number } {
+  const m = save.pokerMesa;
+  if (!m) return { save, valor: 0 };
+  const novo = anotar(
+    { ...save, pokerMesa: null, personagem: { ...save.personagem, dinheiro: save.personagem.dinheiro + m.fichas } },
+    { emoji: "♠️", texto: `Saiu da mesa de poker de R$ ${m.valor.toLocaleString("pt-BR")}`, valor: m.fichas - m.valor, ok: m.fichas >= m.valor },
+  );
+  return { save: novo, valor: m.fichas };
 }

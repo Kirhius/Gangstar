@@ -394,10 +394,10 @@ export function Cidade({ save, aoAtualizar }: { save: GangstarSave; aoAtualizar:
           <div className="gs-lista">
             <IlustracaoBoate />
             <p className="gs-p-intro">Escolha a seção. Aqui tudo sai bem mais caro que no mercado — mas é na hora.</p>
-            <BoateMenu save={save} aoAtualizar={aoAtualizar} />
             <button className="gs-btn gs-btn-cassino gs-btn-bloco" onClick={() => setVisao("cassino")}>
               🎰 Cassino
             </button>
+            <BoateMenu save={save} aoAtualizar={aoAtualizar} />
           </div>
         )}
 
