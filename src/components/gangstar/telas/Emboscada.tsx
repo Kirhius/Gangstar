@@ -23,6 +23,7 @@ import {
   energiaCapo,
   golpearCapo,
   iniciarBatalhaCapo,
+  capoJaEnfrentadoHoje,
   rankingDanoCapo,
   vidaCapo,
   type GolpeId,
@@ -47,6 +48,7 @@ export function Emboscada({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
   const emGrupo = grupo && save.bandidos.length > 0;
   const capo = capoDaSemana(save);
   const capoCaiu = capoDerrotado(save);
+  const capoHoje = capoJaEnfrentadoHoje(save);
   const batalha = batalhaCapo(save);
   const hpBase = vidaCapo(save);
   // durante a batalha a barra ja desconta o dano das rodadas feitas
@@ -135,12 +137,16 @@ export function Emboscada({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
               </span>
             </div>
             <span className={`gs-card-sub ${capoCaiu ? "gs-ok" : ""}`}>
-              {capoCaiu ? "Derrotado! Um novo capo chega na segunda-feira." : `Batalha de 3 rodadas · ⚡${energiaCapo()} · exige 40 de vida. O dano acumula na semana.`}
+              {capoCaiu
+                ? "Derrotado! Um novo capo chega na segunda-feira."
+                : capoHoje
+                  ? "Você já enfrentou o capo hoje (sozinho ou com a gangue). Volte amanhã."
+                  : `Uma batalha por dia, de 3 rodadas · ⚡${energiaCapo()} · exige 40 de vida. O dano acumula na semana.`}
             </span>
           </div>
           {!batalha && (
-            <button className="gs-btn-mini gs-btn-mini-perigo" disabled={capoCaiu || !!p.preso || p.energia < energiaCapo() || p.vida < 40} onClick={enfrentarCapo}>
-              {capoCaiu ? "Caiu" : "Enfrentar"}
+            <button className="gs-btn-mini gs-btn-mini-perigo" disabled={capoCaiu || capoHoje || !!p.preso || p.energia < energiaCapo() || p.vida < 40} onClick={enfrentarCapo}>
+              {capoCaiu ? "Caiu" : capoHoje ? "Amanhã" : "Enfrentar"}
             </button>
           )}
         </div>

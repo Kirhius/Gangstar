@@ -194,6 +194,8 @@ export interface GangstarSave {
   treinosHoje: TreinosDia;
   // estabelecimentos extorquidos (chave = id em EXTORSOES)
   extorsoes: Record<string, ExtorsaoInstancia>;
+  // v1.14: estabelecimentos perdidos num flagrante (id -> dia da perda); so voltam no dia seguinte
+  extorsoesPerdidas?: Record<string, string>;
   bandidos: Bandido[];
   // historico de mortes, prisoes e traicoes dos bandidos (mais recente primeiro)
   registroGangue: OcorrenciaGangue[];
@@ -212,7 +214,7 @@ export interface GangstarSave {
     janela: number;
     feitas: string[];
     // capo da semana: dano acumulado na semana, vida total e a batalha em andamento (3 rodadas)
-    capo: { semana: string; derrotado: boolean; dano?: number; vidaMax?: number; batalha?: BatalhaCapo | null };
+    capo: { semana: string; derrotado: boolean; dano?: number; vidaMax?: number; ultimoDia?: string; batalha?: BatalhaCapo | null };
   };
   cassino: { jackpot: number; torneio: TorneioPoker | null };
   agiota: { divida: number; venceEm: number } | null;
@@ -2299,6 +2301,7 @@ function conquistarExtorsaoBase(save: GangstarSave, id: string): { save: Gangsta
   const p = save.personagem;
   if (!def) return { save, erro: "Estabelecimento não encontrado." };
   if (save.extorsoes[id]) return { save, erro: "Esse estabelecimento já paga pra você." };
+  if (extorsaoPerdidaHoje(save, id)) return { save, erro: "A polícia tomou esse ponto hoje. Dá para dominar de novo amanhã." };
   if (p.preso) return { save, erro: msgBloqueado(p) };
   if (poderDeRoubo(save) < def.poderMin) return { save, erro: `Precisa de poder ${def.poderMin} para intimidar o dono.` };
   if (p.energia < ENERGIA_CONQUISTA) return { save, erro: "Energia insuficiente." };
@@ -2310,6 +2313,10 @@ function conquistarExtorsaoBase(save: GangstarSave, id: string): { save: Gangsta
       extorsoes: { ...save.extorsoes, [id]: { conquistadoEm: agora, ultimaColeta: agora } },
     },
   };
+}
+
+export function extorsaoPerdidaHoje(save: GangstarSave, id: string): boolean {
+  return save.extorsoesPerdidas?.[id] === diaHoje();
 }
 
 export type ResultadoExtorsao = { tipo: "coletou"; valor: number } | { tipo: "preso"; minutos: number; perdido: number };
@@ -2325,8 +2332,16 @@ function coletarExtorsaoBase(save: GangstarSave, id: string): { save: GangstarSa
   const extorsoes = { ...save.extorsoes, [id]: { ...inst, ultimaColeta: agora } };
   if (Math.random() < chancePrisaoExtorsao(save)) {
     const minutos = 10;
+    // v1.14: no flagrante perde so o dinheiro desta coleta e o ponto; dominar de novo so amanha
+    const semPonto = { ...save.extorsoes };
+    delete semPonto[id];
     return {
-      save: { ...save, extorsoes, personagem: { ...p, vezesPreso: p.vezesPreso + 1, preso: { ate: agora + minutos * 60 * 1000 } } },
+      save: {
+        ...save,
+        extorsoes: semPonto,
+        extorsoesPerdidas: { ...(save.extorsoesPerdidas ?? {}), [id]: diaHoje(agora) },
+        personagem: { ...p, vezesPreso: p.vezesPreso + 1, preso: { ate: agora + minutos * 60 * 1000 } },
+      },
       resultado: { tipo: "preso", minutos, perdido: valor },
     };
   }
@@ -3316,8 +3331,10 @@ export function abastecerLoja(save: GangstarSave, lojaId: string, chave: string,
   if (!inst || !ehLoja(inst.tipo)) return { save, erro: "Essa loja não é sua." };
   const item = itemPorId(parseChave(chave).id);
   if (!item || !CATEGORIAS_LOJA[inst.tipo]!.includes(item.categoria)) return { save, erro: "Essa loja não vende esse tipo de item." };
-  const n = Math.min(qtd, qtdItem(save, chave));
-  if (n <= 0) return { save, erro: "Você não tem esse item." };
+  // v1.14: arma, colete ou item raro equipado nao vai para a prateleira
+  const n = Math.min(qtd, qtdNaoEquipada(save, chave));
+  if (qtdItem(save, chave) <= 0) return { save, erro: "Você não tem esse item." };
+  if (n <= 0) return { save, erro: "Esse item está equipado. Desequipe no Perfil para vender." };
   // v1.13: itens do Mercador tambem vao para a prateleira; a loja guarda quantos vieram
   // dele para, se voltarem ao inventario, continuarem sem poder ser revendidos a ele
   const doMercador = Math.min(n, compradosDoMercador(save, chave));
@@ -3404,11 +3421,17 @@ export function capoDaSemana(save: GangstarSave, agora = Date.now()): CapoSemana
     semana,
     nome: c.nome,
     emoji: c.emoji,
-    poder: Math.round(base * (1.8 + rnd() * 0.5)),
-    dinheiro: Math.round((base * 400) / 100) * 100,
+    // v1.14: capo 50% mais forte e recompensa 20% menor
+    poder: Math.round(base * (1.8 + rnd() * 0.5) * 1.5),
+    dinheiro: Math.round((base * 400 * 0.8) / 100) * 100,
     saque: pool[Math.floor(rnd() * pool.length)] ?? ITENS[ITENS.length - 1],
     qualidade: 4 + (rnd() < 0.4 ? 1 : 0),
   };
+}
+
+export function capoJaEnfrentadoHoje(save: GangstarSave): boolean {
+  const c = save.emboscadas.capo;
+  return !!c && c.semana === semanaAtual() && c.ultimoDia === diaHoje() && !c.batalha;
 }
 
 export function capoDerrotado(save: GangstarSave): boolean {
@@ -3892,6 +3915,7 @@ export interface BatalhaCapo {
 interface EstadoCapo {
   semana: string;
   derrotado: boolean;
+  ultimoDia?: string; // v1.14: dia da ultima batalha (uma por dia, sozinho ou com a gangue)
   dano?: number;
   vidaMax?: number;
   batalha?: BatalhaCapo | null;
@@ -3922,6 +3946,11 @@ export function danoCapoSemana(save: GangstarSave): number {
   return estadoCapo(save).dano ?? 0;
 }
 
+// dias ja comecados na semana (segunda = 1 ... domingo = 7)
+function diasDaSemanaCapo(agora = Date.now()): number {
+  return Math.min(7, Math.floor(((agora + 3 * 86400000) % (7 * 86400000)) / 86400000) + 1);
+}
+
 export function rankingDanoCapo(save: GangstarSave): { nome: string; dano: number; voce: boolean }[] {
   const { max } = vidaCapo(save);
   const semana = semanaAtual();
@@ -3930,7 +3959,8 @@ export function rankingDanoCapo(save: GangstarSave): { nome: string; dano: numbe
     .map((g) => ({ g, r: rnd() }))
     .sort((a, b) => a.r - b.r)
     .slice(0, 7)
-    .map(({ g }) => ({ nome: g.nome, dano: Math.round((max * (0.12 + rnd() * 0.6)) / 10) * 10, voce: false }));
+    // v1.14: as gangues rivais tambem so batem uma vez por dia: o dano cresce a cada dia da semana
+    .map(({ g }) => ({ nome: g.nome, dano: Math.round((max * (0.12 + rnd() * 0.6) * diasDaSemanaCapo()) / 7 / 10) * 10, voce: false }));
   const p = save.personagem;
   return [...rivais, { nome: p.gangue ? `${p.gangue} (você)` : `${p.nome} (você)`, dano: danoCapoSemana(save), voce: true }].sort((a, b) => b.dano - a.dano);
 }
@@ -3941,6 +3971,7 @@ export function iniciarBatalhaCapo(save: GangstarSave, emGrupo: boolean): { save
   const c = estadoCapo(save);
   if (c.derrotado) return { save, erro: "O capo desta semana já caiu. Volte na segunda-feira." };
   if (c.batalha) return { save, erro: "Você já está numa batalha." };
+  if (c.ultimoDia === diaHoje()) return { save, erro: "Você já enfrentou o capo hoje. Volte amanhã." };
   if (emGrupo && !save.bandidos.length) return { save, erro: "Você não tem bandidos para levar." };
   if (p.preso) return { save, erro: msgBloqueado(p) };
   if (p.energia < ENERGIA_CAPO) return { save, erro: "Energia insuficiente." };
@@ -3949,7 +3980,7 @@ export function iniciarBatalhaCapo(save: GangstarSave, emGrupo: boolean): { save
   return {
     save: salvarCapo(
       { ...save, personagem: { ...p, energia: p.energia - ENERGIA_CAPO } },
-      { ...c, vidaMax, batalha: { rodada: 0, dano: 0, granadaUsada: false, fintou: false, emGrupo, vidaPerdida: 0, log: [] } },
+      { ...c, vidaMax, ultimoDia: diaHoje(), batalha: { rodada: 0, dano: 0, granadaUsada: false, fintou: false, emGrupo, vidaPerdida: 0, log: [] } },
     ),
   };
 }
@@ -5294,4 +5325,19 @@ function verificarSemanaEmboscada(save: GangstarSave, agora = Date.now()): Gangs
 export function marcarRankingEmboscadaVisto(save: GangstarSave): GangstarSave {
   if (!save.ultimoRankingEmboscada || save.ultimoRankingEmboscada.visto) return save;
   return { ...save, ultimoRankingEmboscada: { ...save.ultimoRankingEmboscada, visto: true } };
+}
+
+
+// v1.14: quantas unidades desse item (chave) estao livres, sem contar a que esta equipada
+export function qtdNaoEquipada(save: GangstarSave, chave: string): number {
+  const { id } = parseChave(chave);
+  const total = qtdItem(save, chave);
+  const equipado =
+    save.personagem.armaEquipada === id || save.equipamento.colete === id || save.equipamento.especial === id;
+  if (!equipado) return total;
+  // o equipado e o de melhor qualidade que voce tem; tira uma unidade dessa chave
+  const melhor = Object.keys(save.inventario)
+    .filter((k) => parseChave(k).id === id && (save.inventario[k] ?? 0) > 0)
+    .sort((a, b) => parseChave(b).q - parseChave(a).q)[0];
+  return melhor === chave ? Math.max(0, total - 1) : total;
 }

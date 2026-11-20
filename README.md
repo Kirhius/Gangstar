@@ -48,6 +48,12 @@ Como fica sincronizado: o save de cada jogador fica na nuvem (`gs_saves`) e um r
 
 **Já entregue na v4.61.0:** itens raros com durabilidade e conserto, equipe única (bandidos do recrutamento), linhas de produção nas fábricas, boate vendendo itens, notas de qualidade C a SS.
 
+## v1.14.0
+
+- Loja de armas: arma, colete ou item raro equipado não vai para a prateleira (desequipe no Perfil antes).
+- Capo da semana: uma batalha por dia (sozinho ou com a gangue); as gangues rivais também só batem uma vez por dia (o dano delas cresce a cada dia da semana). Capo 50% mais forte e recompensa em dinheiro 20% menor.
+- Extorsões: no flagrante você perde só o dinheiro daquela coleta e também o estabelecimento, que só pode ser dominado de novo no dia seguinte (🚔 no mapa).
+
 ## v1.13.0
 
 - Roubos solo a partir do Golpe do bilhete premiado: +30% de poder exigido e +20% de lucro.

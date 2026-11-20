@@ -15,6 +15,7 @@ import {
   conquistarExtorsao,
   energiaConquistaExtorsao,
   extorsaoPendente,
+  extorsaoPerdidaHoje,
   poderDeRoubo,
 } from "@/lib/gangstar";
 import { TituloComAjuda } from "../TituloComAjuda";
@@ -55,7 +56,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
       setResultado({
         sucesso: false,
         titulo: "🚔 Flagrante!",
-        linhas: [`A polícia te pegou recolhendo em ${def?.nome ?? "um estabelecimento"}.`, `Perdeu ${formatarDinheiro(r.resultado.perdido)}.`, `Preso por ${r.resultado.minutos} min.`],
+        linhas: [`A polícia te pegou recolhendo em ${def?.nome ?? "um estabelecimento"}.`, `Perdeu ${formatarDinheiro(r.resultado.perdido)} e o ponto: dá para dominar de novo amanhã.`, `Preso por ${r.resultado.minutos} min.`],
       });
     }
   };
@@ -63,11 +64,18 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
   const estados: Record<string, EstadoAlvoExtorsao> = {};
   for (const e of EXTORSOES) {
     const meu = !!save.extorsoes[e.id];
-    estados[e.id] = { nome: e.nome, meu, bloqueado: poder < e.poderMin, pendente: meu ? extorsaoPendente(save, e.id) : 0 };
+    estados[e.id] = {
+      nome: e.nome,
+      meu,
+      bloqueado: poder < e.poderMin || extorsaoPerdidaHoje(save, e.id),
+      perdida: extorsaoPerdidaHoje(save, e.id),
+      pendente: meu ? extorsaoPendente(save, e.id) : 0,
+    };
   }
   const def = aberto ? EXTORSOES.find((e) => e.id === aberto) : undefined;
   const defMeu = def ? !!save.extorsoes[def.id] : false;
   const defPendente = def ? extorsaoPendente(save, def.id) : 0;
+  const defPerdida = def ? extorsaoPerdidaHoje(save, def.id) : false;
   const defFraco = def ? poder < def.poderMin : false;
 
   return (
@@ -77,7 +85,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
         ajuda={
           <p>
             Seu poder: <strong>{poder}</strong>. Domine estabelecimentos e eles pagam proteção por hora (acumula até 12h). Cada coleta tem{" "}
-            {Math.round(chancePrisaoExtorsao(save) * 100)}% de chance de flagrante: você perde o valor, é preso e perde 100 de respeito. Cada coleta ou conquista custa ❤️1. A Federal fica de olho: dominar sobe o alerta em {ALERTA_DOMINAR_EXTORSAO}% e cada coleta em {ALERTA_COLETA_EXTORSAO}%.
+            {Math.round(chancePrisaoExtorsao(save) * 100)}% de chance de flagrante: você perde o valor daquela coleta e o estabelecimento (dá para dominar de novo só no dia seguinte), é preso e perde 100 de respeito. Cada coleta ou conquista custa ❤️1. A Federal fica de olho: dominar sobe o alerta em {ALERTA_DOMINAR_EXTORSAO}% e cada coleta em {ALERTA_COLETA_EXTORSAO}%.
           </p>
         }
       />
@@ -88,6 +96,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
           const meu = !!save.extorsoes[e.id];
           const pendente = extorsaoPendente(save, e.id);
           const fraco = poder < e.poderMin;
+          const perdida = extorsaoPerdidaHoje(save, e.id);
           return (
             <div key={e.id} className={`gs-card ${meu ? "gs-card-ativo" : fraco ? "gs-card-bloqueado" : ""}`}>
               <span className="gs-card-emoji">{!meu && fraco ? "🔒" : e.emoji}</span>
@@ -96,7 +105,9 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
                 <span className="gs-card-sub">
                   {meu
                     ? `${formatarDinheiro(e.rendaPorHora)}/h · acumulado ${formatarDinheiro(pendente)}`
-                    : `Poder ${e.poderMin} · rende ${formatarDinheiro(e.rendaPorHora)}/h · ⚡${energiaConquistaExtorsao()} · 🚨+${ALERTA_DOMINAR_EXTORSAO}%`}
+                    : perdida
+                      ? "🚔 A polícia tomou esse ponto hoje. Dá para dominar de novo amanhã."
+                      : `Poder ${e.poderMin} · rende ${formatarDinheiro(e.rendaPorHora)}/h · ⚡${energiaConquistaExtorsao()} · 🚨+${ALERTA_DOMINAR_EXTORSAO}%`}
                 </span>
               </div>
               {meu ? (
@@ -104,7 +115,7 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
                   Coletar
                 </button>
               ) : (
-                <button className="gs-btn-mini" disabled={fraco || !!p.preso || p.energia < energiaConquistaExtorsao()} onClick={() => conquistar(e.id)}>
+                <button className="gs-btn-mini" disabled={fraco || perdida || !!p.preso || p.energia < energiaConquistaExtorsao()} onClick={() => conquistar(e.id)}>
                   Dominar
                 </button>
               )}
@@ -147,10 +158,10 @@ export function Extorsoes({ save, aoAtualizar }: { save: GangstarSave; aoAtualiz
             ) : (
               <button
                 className="gs-btn gs-btn-principal gs-btn-bloco"
-                disabled={defFraco || !!p.preso || p.energia < energiaConquistaExtorsao()}
+                disabled={defFraco || defPerdida || !!p.preso || p.energia < energiaConquistaExtorsao()}
                 onClick={() => conquistar(def.id)}
               >
-                {defFraco ? "🔒 Poder insuficiente" : "👊 Dominar"}
+                {defPerdida ? "🚔 Perdido hoje · volte amanhã" : defFraco ? "🔒 Poder insuficiente" : "👊 Dominar"}
               </button>
             )}
           </div>

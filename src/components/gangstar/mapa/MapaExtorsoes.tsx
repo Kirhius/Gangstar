@@ -29,6 +29,7 @@ export interface EstadoAlvoExtorsao {
   nome: string;
   meu: boolean;
   bloqueado: boolean;
+  perdida?: boolean; // v1.14: tomado pela policia hoje
   pendente: number; // valor acumulado para coletar
 }
 
@@ -97,7 +98,7 @@ export function MapaExtorsoes({ estados, onLocal }: { estados: Record<string, Es
               <g key={`c-${a.id}`} pointerEvents="none">
                 <circle cx={cx} cy={cy} r={24} fill="rgba(21,10,36,0.82)" stroke="#5a4a72" strokeWidth={3} />
                 <text x={cx} y={cy + 10} textAnchor="middle" fontSize={26}>
-                  🔒
+                  {e.perdida ? "🚔" : "🔒"}
                 </text>
               </g>
             );

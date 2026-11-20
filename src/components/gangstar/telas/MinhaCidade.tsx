@@ -44,6 +44,7 @@ import {
   VICIO_PERIGO,
   CATEGORIAS_LOJA,
   abastecerLoja,
+  qtdNaoEquipada,
   clientesPorHora,
   coletarCaixaLoja,
   demandaCategoria,
@@ -454,7 +455,9 @@ function PainelLoja({
     .filter(([, n]) => n > 0)
     .map(([k, n]) => pilha(k, n))
     .filter(valido);
+  // v1.14: o que esta equipado (arma, colete, item raro) nao aparece para abastecer
   const noInventario = Object.entries(save.inventario)
+    .map(([k]) => [k, qtdNaoEquipada(save, k)] as const)
     .filter(([, n]) => n > 0)
     .map(([k, n]) => pilha(k, n))
     .filter(valido)
